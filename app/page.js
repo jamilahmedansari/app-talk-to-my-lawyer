@@ -51,7 +51,7 @@ import {
   Upload,
   ChevronLeft,
 } from "lucide-react"
-import { loadStripe } from "@stripe/stripe.js"
+import { loadStripe } from "@stripe/stripe-js"
 import jsPDF from "jspdf"
 import { v4 as uuidv4 } from "uuid"
 
@@ -1886,6 +1886,11 @@ const DetailedLetterGenerationForm = ({ user, token, subscription, onLetterGener
   const [selectedTypeName, setSelectedTypeName] = useState("Demand Letter") // Default to Demand Letter
   const [formData, setFormData] = useState({
     fullName: user?.name || "",
+    businessName: "",
+    address: "",
+    email: user?.email || "",
+    phone: "",
+    recipientName: "",
     businessName: "",
     address: "",
     email: user?.email || "",
