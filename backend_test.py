@@ -12,7 +12,7 @@ import re
 from datetime import datetime
 
 # Get base URL from environment
-BASE_URL = os.getenv('NEXT_PUBLIC_BASE_URL', 'https://61eb46e2-ed58-4aa4-b125-53ecb05bcc9c.preview.emergentagent.com')
+BASE_URL = os.getenv('NEXT_PUBLIC_BASE_URL', 'https://2a3de0b7-52ef-4f67-8d77-4484726ffcd5.preview.emergentagent.com')
 API_BASE = f"{BASE_URL}/api"
 
 class PrismaMigrationTester:
