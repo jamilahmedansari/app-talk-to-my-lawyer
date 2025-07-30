@@ -114,7 +114,7 @@ class SupabaseAuthTester:
             
             # Test admin signup
             admin_data = {
-                "email": f"admin_{int(time.time())}@example.com",
+                "email": "admin@example.com",
                 "password": "password123",
                 "name": "Test Admin",
                 "role": "admin"
