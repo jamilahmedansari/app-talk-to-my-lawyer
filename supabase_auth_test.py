@@ -78,7 +78,7 @@ class SupabaseAuthTester:
             
             # Test contractor signup
             contractor_data = {
-                "email": "contractor@example.com",
+                "email": "contractor@gmail.com",
                 "password": "password123",
                 "name": "Test Contractor",
                 "role": "contractor"
