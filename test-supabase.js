@@ -7,23 +7,39 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function testSupabaseConnection() {
   try {
-    console.log('Testing Supabase connection...')
+    console.log('Testing Supabase connection with actual tables...')
     
-    // Test simple query
-    const { data, error } = await supabase.from('users').select('count').limit(1)
+    // Test users table
+    const { data: users, error: usersError } = await supabase.from('users').select('count').limit(1)
     
-    if (error) {
-      console.error('Supabase error:', error.message)
-      // If table doesn't exist yet, that's expected
-      if (error.message.includes('does not exist')) {
-        console.log('✅ Supabase connection successful (table not created yet)')
-        return true
-      }
+    if (usersError) {
+      console.error('Users table error:', usersError.message)
       return false
     }
     
-    console.log('✅ Supabase connection successful')
-    console.log('Sample data:', data)
+    console.log('✅ Users table accessible')
+    
+    // Test contractors table
+    const { data: contractors, error: contractorsError } = await supabase.from('contractors').select('count').limit(1)
+    
+    if (contractorsError) {
+      console.error('Contractors table error:', contractorsError.message)
+      return false
+    }
+    
+    console.log('✅ Contractors table accessible')
+    
+    // Test letters table
+    const { data: letters, error: lettersError } = await supabase.from('letters').select('count').limit(1)
+    
+    if (lettersError) {
+      console.error('Letters table error:', lettersError.message)
+      return false
+    }
+    
+    console.log('✅ Letters table accessible')
+    
+    console.log('✅ All core tables are accessible - schema setup successful!')
     return true
   } catch (error) {
     console.error('❌ Connection failed:', error.message)
