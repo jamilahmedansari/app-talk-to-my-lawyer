@@ -42,7 +42,7 @@ class SupabaseAuthTester:
             
             # Test regular user signup (using sample data from request)
             user_data = {
-                "email": "test@example.com",
+                "email": "testuser@gmail.com",
                 "password": "password123",
                 "name": "Test User",
                 "role": "user"
