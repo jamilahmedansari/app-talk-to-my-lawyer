@@ -40,9 +40,9 @@ class SupabaseAuthTester:
         try:
             print("\n🔍 TESTING SUPABASE AUTH SIGNUP")
             
-            # Test regular user signup
+            # Test regular user signup (using sample data from request)
             user_data = {
-                "email": f"testuser_{int(time.time())}@example.com",
+                "email": "test@example.com",
                 "password": "password123",
                 "name": "Test User",
                 "role": "user"
