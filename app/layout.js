@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { AuthProvider } from '@/contexts/auth-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,8 +15,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="light">
       <body className={`${inter.className} bg-gray-50 text-gray-900 min-h-screen`}>
-        {children}
-        <Toaster position="top-right" theme="light" />
+        <AuthProvider>
+          {children}
+          <Toaster position="top-right" theme="light" />
+        </AuthProvider>
       </body>
     </html>
   )
