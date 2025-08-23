@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("MONGO_URL")
 }
 
 model User {
-  id               String    @id @default(uuid())
+  id               String    @id @default(uuid()) @map("_id")
   email            String    @unique
   password         String
   name             String
@@ -40,7 +40,7 @@ model User {
 }
 
 model Contractor {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @map("_id")
   userId       String   @unique
   points       Int      @default(0)
   totalSignups Int      @default(0)
@@ -56,7 +56,7 @@ model Contractor {
 }
 
 model Admin {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @map("_id")
   userId      String   @unique
   permissions String[] // JSON array stored as strings
   createdAt   DateTime @default(now())
@@ -69,7 +69,7 @@ model Admin {
 }
 
 model Letter {
-  id                    String   @id @default(uuid())
+  id                    String   @id @default(uuid()) @map("_id")
   userId                String
   title                 String
   content               String   @default("")
@@ -90,7 +90,7 @@ model Letter {
 }
 
 model Document {
-  id                    String   @id @default(uuid())
+  id                    String   @id @default(uuid()) @map("_id")
   userId                String
   title                 String
   content               String   @default("")
@@ -112,7 +112,7 @@ model Document {
 }
 
 model Coupon {
-  id             String   @id @default(uuid())
+  id             String   @id @default(uuid()) @map("_id")
   contractorId   String
   code           String   @unique
   discountPercent Int
@@ -128,7 +128,7 @@ model Coupon {
 }
 
 model PaymentSession {
-  id              String    @id @default(uuid())
+  id              String    @id @default(uuid()) @map("_id")
   userId          String
   stripeSessionId String    @unique
   packageType     String    // "4letters", "6letters", "8letters"
@@ -146,7 +146,7 @@ model PaymentSession {
 }
 
 model WebhookLog {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @map("_id")
   eventId   String
   eventType String
   status    String   // "success", "failed", "error", "unhandled"
@@ -159,7 +159,7 @@ model WebhookLog {
 }
 
 model EmailLog {
-  id             String    @id @default(uuid())
+  id             String    @id @default(uuid()) @map("_id")
   letterId       String?
   documentId     String?
   recipientEmail String

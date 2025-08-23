@@ -3,15 +3,13 @@ const nextConfig = {
   /* ============================================================
    * Build-time settings
    * ============================================================
-   * Ignore lint & type errors during production builds so they
-   * don’t fail the CI/CD pipeline. Adjust to false in stricter
-   * environments.
+   * In production, we should enable strict checking
    */
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: process.env.NODE_ENV === 'development',
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: process.env.NODE_ENV === 'development',
   },
 
   /* ============================================================
@@ -22,6 +20,7 @@ const nextConfig = {
    */
   images: {
     unoptimized: true,
+    domains: ['localhost', 'your-domain.com'], // Add your domains here
   },
 
   /* ============================================================
@@ -34,14 +33,14 @@ const nextConfig = {
   },
 
   /* ============================================================
-   * Custom headers
+   * Custom headers for security
    * ============================================================ */
   async headers() {
     return [
       {
         source: "/api/:path*",
         headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Origin", value: process.env.NEXT_PUBLIC_BASE_URL || "*" },
           {
             key: "Access-Control-Allow-Methods",
             value: "GET, POST, PUT, DELETE, OPTIONS",
@@ -53,8 +52,34 @@ const nextConfig = {
           { key: "Access-Control-Allow-Credentials", value: "true" },
         ],
       },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
     ]
   },
+
+  /* ============================================================
+   * Server external packages
+   * ============================================================ */
+  serverExternalPackages: ['@prisma/client'],
 }
 
 module.exports = nextConfig

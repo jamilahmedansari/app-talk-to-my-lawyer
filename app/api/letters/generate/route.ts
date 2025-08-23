@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
     // Require authentication
     const user = await requireAuth()
 
-    const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const cookieStore = cookies()
+    const supabase = await createClient(cookieStore)
 
     const body = await request.json()
     const {
@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Letter generation error:', error)
     
-    if (error.message.includes('Authentication required')) {
+    // Type guard for error handling
+    if (error instanceof Error && error.message.includes('Authentication required')) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
     
