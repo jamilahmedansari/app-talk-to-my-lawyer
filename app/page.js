@@ -141,7 +141,7 @@ export default function App() {
         setLetters(data.letters)
       }
     } catch (error) {
-      console.error("Error fetching letters:", error)
+      // Silently handle error for production
     }
   }
 
@@ -1335,7 +1335,7 @@ const AdminDashboard = ({ user, token, handleLogout }) => {
                   username: employee.name.toLowerCase().replace(/\s+/g, "").substring(0, 5),
                 }
               } catch (error) {
-                console.error("Error fetching contractor stats:", error)
+                // Silently handle error for production
                 return {
                   ...employee,
                   points: 0,
@@ -1362,7 +1362,7 @@ const AdminDashboard = ({ user, token, handleLogout }) => {
           }))
         }
       } catch (error) {
-        console.error("Error fetching admin data:", error)
+        // Silently handle error for production
         toast.error("Failed to load admin data")
       } finally {
         setLoading(false)
@@ -1735,6 +1735,118 @@ const RemoteEmployeesSection = ({ remoteEmployees }) => {
   )
 }
 
+// Remote Employee Dashboard Component
+const RemoteEmployeeDashboard = ({ user, token, handleLogout }) => {
+  const [activeTab, setActiveTab] = useState("overview")
+  const [stats, setStats] = useState({
+    points: 0,
+    totalSignups: 0,
+    recentActivity: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch("/api/remote-employee/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        // Silently handle error for production
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [token])
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-modern">Contractor Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome back, {user.name}</p>
+          </div>
+          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 bg-transparent">
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="card-modern p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Points</p>
+                <p className="text-2xl font-bold text-green-600">{stats.points}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <Star className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="card-modern p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Signups</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.totalSignups}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="card-modern p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Status</p>
+                <p className="text-2xl font-bold text-purple-600">Active</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Activity Feed */}
+        <Card className="card-modern p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current mx-auto"></div>
+            </div>
+          ) : stats.recentActivity && stats.recentActivity.length > 0 ? (
+            <div className="space-y-4">
+              {stats.recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-700">{activity.description}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{activity.date}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-8">No recent activity</p>
+          )}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 const UserDashboard = ({ user, token, letters, handleLogout, createSubscriptionCheckout, loading }) => {
   const [activeTab, setActiveTab] = useState("generate")
   const [refreshLetters, setRefreshLetters] = useState(0)
@@ -1817,7 +1929,7 @@ const DocumentTypeSelector = ({ onSelect, selectedCategory, selectedType }) => {
         const data = await response.json()
         setCategories(data.categories)
       } catch (error) {
-        console.error("Error fetching document types:", error)
+        // Silently handle error for production
       } finally {
         setLoading(false)
       }
@@ -2468,7 +2580,7 @@ const MyLettersSection = ({ letters, refreshKey }) => {
         setUserLetters(data.letters || [])
       }
     } catch (error) {
-      console.error("Error fetching letters:", error)
+      // Silently handle error for production
     } finally {
       setLoading(false)
     }

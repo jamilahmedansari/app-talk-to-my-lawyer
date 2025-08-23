@@ -4,9 +4,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { requireAuth } from '@/lib/auth-helpers'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client only if API key is available
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'No letters remaining. Please upgrade your subscription.' 
       }, { status: 400 })
+    }
+
+    // Check if OpenAI is available
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'AI letter generation is currently unavailable. Please try again later.' 
+      }, { status: 503 })
     }
 
     // Generate letter with OpenAI
@@ -65,7 +73,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (letterError) {
-      console.error('Error saving letter:', letterError)
       return NextResponse.json({ error: 'Failed to save letter' }, { status: 500 })
     }
 
@@ -86,8 +93,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Letter generation error:', error)
-    
     if (error.message.includes('Authentication required')) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }

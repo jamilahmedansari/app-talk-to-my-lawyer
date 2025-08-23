@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (userError) {
-      console.error('Error fetching user data:', userError)
+      // Silently handle error for production
     }
 
     // Update last login
@@ -51,7 +51,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Signin error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -72,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error)
       setUser(null)
     }
   }
@@ -95,7 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: data.error || 'Failed to sign up' }
       }
     } catch (error) {
-      console.error('Sign up error:', error)
       return { error: 'Network error' }
     }
   }
@@ -118,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: data.error || 'Failed to sign in' }
       }
     } catch (error) {
-      console.error('Sign in error:', error)
       return { error: 'Network error' }
     }
   }
