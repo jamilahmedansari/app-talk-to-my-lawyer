@@ -54,13 +54,13 @@ import {
 import { loadStripe } from "@stripe/stripe-js"
 import jsPDF from "jspdf"
 import { v4 as uuidv4 } from "uuid"
+import { useAuth } from "@/contexts/auth-context"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 
 // Enhanced Professional Legal Services Landing Page
 export default function App() {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
+  const { user, signIn, signUp, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState("login")
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [loading, setLoading] = useState(false)

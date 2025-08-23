@@ -19,7 +19,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Helper function to handle CORS
-function handleCORS(response) {
+function handleCORS(response: NextResponse) {
   response.headers.set('Access-Control-Allow-Origin', '*')
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature')
@@ -28,9 +28,9 @@ function handleCORS(response) {
 }
 
 // Helper function to verify JWT token
-function verifyToken(token) {
+function verifyToken(token: string) {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET)
+    return jwt.verify(token, process.env.JWT_SECRET!) as any
   } catch (error) {
     return null
   }
@@ -42,7 +42,7 @@ function generateCouponCode() {
 }
 
 // Helper function to log webhook events
-async function logWebhookEvent(event, status, error = null) {
+async function logWebhookEvent(event: any, status: string, error: string | null = null) {
   try {
     await prisma.webhookLog.create({
       data: {
@@ -67,7 +67,7 @@ export async function OPTIONS() {
 }
 
 // Route handler function
-async function handleRoute(request, { params }) {
+async function handleRoute(request: Request, { params }: { params: { path?: string[] } }) {
   const { path = [] } = params
   const route = `/${path.join('/')}`
   const method = request.method
@@ -1385,7 +1385,7 @@ export const DELETE = handleRoute
 export const PATCH = handleRoute
 
 // Document generation helper functions
-function getDocumentSystemPrompt(documentType, category) {
+function getDocumentSystemPrompt(documentType: string, category: string) {
   const categoryPrompts = {
     business_letters: `You are a professional legal letter writer and paralegal assistant working for Talk To My Lawyer. Generate formal, professional, and legally appropriate business letters based on the provided information. 
     
@@ -1475,7 +1475,7 @@ function getDocumentSystemPrompt(documentType, category) {
   return categoryPrompts[category] || categoryPrompts.business_letters
 }
 
-function buildDocumentPrompt(documentType, category, formData, urgencyLevel) {
+function buildDocumentPrompt(documentType: string, category: string, formData: any, urgencyLevel: string) {
   let prompt = `Generate a professional ${documentType} document with the following details:\n\n`
   
   // Add common fields

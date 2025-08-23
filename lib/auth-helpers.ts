@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 
 export async function getCurrentUser() {
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
   
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()

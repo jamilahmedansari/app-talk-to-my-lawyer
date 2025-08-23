@@ -3,10 +3,10 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const { email, password, name, role = 'user' } = await request.json()
+  const { email, password, name, role } = await request.json()
 
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   try {
     // Sign up with Supabase Auth

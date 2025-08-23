@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const { email, password } = await request.json()
 
   const cookieStore = await cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   try {
     // Sign in with Supabase Auth

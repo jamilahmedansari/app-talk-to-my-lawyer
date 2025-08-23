@@ -17,10 +17,25 @@ import {
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 
-export const TimelineModal = ({ isOpen, onClose, letterId, subscriptionInfo }) => {
+interface TimelineModalProps {
+  isOpen: boolean
+  onClose: () => void
+  letterId: string
+  subscriptionInfo: any
+}
+
+interface LetterData {
+  id: string
+  title: string
+  content: string
+  status: string
+  created_at: string
+}
+
+export const TimelineModal: React.FC<TimelineModalProps> = ({ isOpen, onClose, letterId, subscriptionInfo }) => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [letterData, setLetterData] = useState(null)
-  const [sendingMethod, setSendingMethod] = useState(null)
+  const [letterData, setLetterData] = useState<LetterData | null>(null)
+  const [sendingMethod, setSendingMethod] = useState<string | null>(null)
   const [recipientEmail, setRecipientEmail] = useState('')
   const [recipientAddress, setRecipientAddress] = useState('')
   const [loading, setLoading] = useState(false)
@@ -53,7 +68,7 @@ export const TimelineModal = ({ isOpen, onClose, letterId, subscriptionInfo }) =
     }
   }, [isOpen, letterId])
 
-  const sendTimelineEmail = async (step) => {
+  const sendTimelineEmail = async (step: number) => {
     try {
       await fetch('/api/notifications/timeline', {
         method: 'POST',
