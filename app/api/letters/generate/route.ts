@@ -88,8 +88,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Letter generation error:', error)
     
-    if (error.message.includes('Authentication required')) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
+    if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+      if (error.message.includes('Authentication required')) {
+        return NextResponse.json({ error: error.message }, { status: 401 })
+      }
     }
     
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
