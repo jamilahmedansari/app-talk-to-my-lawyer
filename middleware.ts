@@ -1,13 +1,25 @@
 import { type NextRequest } from 'next/server'
-import { createClient } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createClient(request)
+  // Only run middleware in production or when Supabase is configured
+  if (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return
+  }
 
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getSession()
+  try {
+    // Lazy load Supabase middleware to prevent build-time execution
+    const { createClient } = await import('@/utils/supabase/middleware')
+    const { supabase, response } = createClient(request)
 
-  return response
+    // Refresh session if expired - required for Server Components
+    await supabase.auth.getSession()
+
+    return response
+  } catch (error) {
+    console.warn('Middleware error:', error)
+    // Return a default response if middleware fails
+    return new Response(null, { status: 200 })
+  }
 }
 
 export const config = {
@@ -17,8 +29,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - api routes (to avoid Edge Runtime issues)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -55,7 +55,10 @@ import { loadStripe } from "@stripe/stripe-js"
 import jsPDF from "jspdf"
 import { v4 as uuidv4 } from "uuid"
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_dummy')
 
 // Enhanced Professional Legal Services Landing Page
 export default function App() {

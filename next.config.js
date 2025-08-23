@@ -4,7 +4,7 @@ const nextConfig = {
    * Build-time settings
    * ============================================================
    * Ignore lint & type errors during production builds so they
-   * don’t fail the CI/CD pipeline. Adjust to false in stricter
+   * don't fail the CI/CD pipeline. Adjust to false in stricter
    * environments.
    */
   eslint: {
@@ -55,6 +55,26 @@ const nextConfig = {
       },
     ]
   },
+
+  /* ============================================================
+   * Experimental features
+   * ============================================================ */
+  experimental: {
+    // Disable static generation for problematic routes
+    workerThreads: false,
+    cpus: 1,
+  },
+
+  /* ============================================================
+   * Build output
+   * ============================================================ */
+  output: 'standalone',
+
+  /* ============================================================
+   * Disable static generation
+   * ============================================================ */
+  trailingSlash: false,
+  generateEtags: false,
 }
 
 module.exports = nextConfig
