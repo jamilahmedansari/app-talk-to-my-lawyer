@@ -7,16 +7,25 @@ import Stripe from 'stripe'
 import { v4 as uuidv4 } from 'uuid'
 import prisma from '@/lib/prisma'
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI with proper error handling
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with proper error handling
+let resend = null;
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+}
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with proper error handling
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 // Helper function to handle CORS
 function handleCORS(response) {
@@ -30,6 +39,10 @@ function handleCORS(response) {
 // Helper function to verify JWT token
 function verifyToken(token) {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.warn('JWT_SECRET not configured');
+      return null;
+    }
     return jwt.verify(token, process.env.JWT_SECRET)
   } catch (error) {
     return null
@@ -418,6 +431,14 @@ async function handleRoute(request, { params }) {
       }
 
       try {
+        // Check if Stripe is configured
+        if (!stripe) {
+          return handleCORS(NextResponse.json({ 
+            error: 'Payment service not configured. Please set STRIPE_SECRET_KEY in your environment variables.',
+            payment_service_error: true
+          }, { status: 500 }))
+        }
+
         // Create or get Stripe customer
         let stripeCustomerId = user.stripeCustomerId
         if (!stripeCustomerId) {
@@ -460,8 +481,8 @@ async function handleRoute(request, { params }) {
             quantity: 1
           }],
           customer: stripeCustomerId,
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}?canceled=true`,
+          success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}?canceled=true`,
           metadata: {
             userId: decoded.userId,
             packageType: packageType
@@ -510,6 +531,15 @@ async function handleRoute(request, { params }) {
 
       let event
       try {
+        // Check if Stripe is configured
+        if (!stripe) {
+          console.error('Stripe not configured for webhook processing')
+          return handleCORS(NextResponse.json({ 
+            error: 'Payment service not configured. Please set STRIPE_SECRET_KEY in your environment variables.',
+            payment_service_error: true
+          }, { status: 500 }))
+        }
+
         // Verify webhook signature if webhook secret is available
         if (process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOK_SECRET !== 'whsec_placeholder') {
           event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
@@ -769,6 +799,14 @@ async function handleRoute(request, { params }) {
       const enhancedPrompt = buildDocumentPrompt(documentType, category, formData, urgencyLevel)
 
       try {
+        // Check if OpenAI is configured
+        if (!openai) {
+          return handleCORS(NextResponse.json({ 
+            error: 'OpenAI API not configured. Please set OPENAI_API_KEY in your environment variables.',
+            ai_service_error: true
+          }, { status: 500 }))
+        }
+
         // Generate document with OpenAI
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -896,6 +934,14 @@ async function handleRoute(request, { params }) {
       `
 
       try {
+        // Check if OpenAI is configured
+        if (!openai) {
+          return handleCORS(NextResponse.json({ 
+            error: 'OpenAI API not configured. Please set OPENAI_API_KEY in your environment variables.',
+            ai_service_error: true
+          }, { status: 500 }))
+        }
+
         // Generate letter with OpenAI
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -1086,6 +1132,14 @@ async function handleRoute(request, { params }) {
       }
 
       try {
+        // Check if Resend is configured
+        if (!resend) {
+          return handleCORS(NextResponse.json({ 
+            error: 'Email service not configured. Please set RESEND_API_KEY in your environment variables.',
+            email_service_error: true
+          }, { status: 500 }))
+        }
+
         await resend.emails.send({
           from: 'Talk To My Lawyer <noreply@talktomylawyer.com>',
           to: recipientEmail,

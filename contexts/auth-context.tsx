@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
 import { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -21,16 +20,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   
-  const supabase = createClient()
+  // Lazy load Supabase client to prevent build-time execution
+  const getSupabaseClient = async () => {
+    if (typeof window === 'undefined') return null
+    const { createClient } = await import('@/utils/supabase/client')
+    return createClient()
+  }
 
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
+      try {
+        const supabase = await getSupabaseClient()
+        if (supabase) {
+          const { data: { session } } = await supabase.auth.getSession()
+          setSession(session)
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id)
+          }
+        }
+      } catch (error) {
+        console.warn('Supabase not available during build:', error)
       }
       
       setLoading(false)
@@ -39,21 +50,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session)
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user.id)
-        } else {
-          setUser(null)
-        }
-        
-        setLoading(false)
-      }
-    )
+    const setupAuthListener = async () => {
+      try {
+        const supabase = await getSupabaseClient()
+        if (supabase) {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+              setSession(session)
+              
+              if (session?.user) {
+                await fetchUserProfile(session.user.id)
+              } else {
+                setUser(null)
+              }
+              
+              setLoading(false)
+            }
+          )
 
-    return () => subscription.unsubscribe()
+          return () => subscription.unsubscribe()
+        }
+      } catch (error) {
+        console.warn('Supabase not available during build:', error)
+      }
+    }
+
+    setupAuthListener()
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
@@ -125,7 +147,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await fetch('/api/auth/signout', { method: 'POST' })
-    await supabase.auth.signOut()
+    try {
+      const supabase = await getSupabaseClient()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
+    } catch (error) {
+      console.warn('Supabase not available during sign out:', error)
+    }
   }
 
   const refreshUser = async () => {
