@@ -7,16 +7,20 @@ import Stripe from 'stripe'
 import { v4 as uuidv4 } from 'uuid'
 import prisma from '@/lib/prisma'
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI only if API key is available
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+const resend = process.env.RESEND_API_KEY 
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe only if API key is available
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 // Helper function to handle CORS
 function handleCORS(response) {
@@ -57,7 +61,7 @@ async function logWebhookEvent(event, status, error = null) {
       }
     })
   } catch (logError) {
-    console.error('Failed to log webhook event:', logError)
+    // Silently handle error for production
   }
 }
 
@@ -417,6 +421,14 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'User not found' }, { status: 404 }))
       }
 
+      // Check if Stripe is available
+      if (!stripe) {
+        return handleCORS(NextResponse.json({ 
+          error: 'Payment processing is currently unavailable. Please try again later.',
+          payment_service_error: true
+        }, { status: 503 }))
+      }
+
       try {
         // Create or get Stripe customer
         let stripeCustomerId = user.stripeCustomerId
@@ -491,7 +503,6 @@ async function handleRoute(request, { params }) {
           url: session.url
         }))
       } catch (error) {
-        console.error('Stripe Checkout Error:', error)
         return handleCORS(NextResponse.json({ 
           error: 'Failed to create checkout session. Please try again.' 
         }, { status: 500 }))
@@ -500,11 +511,18 @@ async function handleRoute(request, { params }) {
 
     // Stripe webhook - POST /api/webhooks/stripe
     if (route === '/webhooks/stripe' && method === 'POST') {
+      // Check if Stripe is available
+      if (!stripe) {
+        return handleCORS(NextResponse.json({ 
+          error: 'Payment webhook processing is currently unavailable.',
+          payment_service_error: true
+        }, { status: 503 }))
+      }
+
       const body = await request.text()
       const sig = request.headers.get('stripe-signature')
       
       if (!sig) {
-        console.error('Missing stripe-signature header')
         return handleCORS(NextResponse.json({ error: 'Missing signature' }, { status: 400 }))
       }
 
@@ -516,15 +534,13 @@ async function handleRoute(request, { params }) {
         } else {
           // For development, parse the event without verification
           event = JSON.parse(body)
-          console.warn('Webhook signature verification skipped - using development mode')
         }
       } catch (err) {
-        console.error('Webhook signature verification failed:', err.message)
         await logWebhookEvent({ id: 'unknown', type: 'signature_verification_failed' }, 'failed', err.message)
         return handleCORS(NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 }))
       }
 
-      console.log(`Received webhook event: ${event.type}`)
+
 
       try {
         switch (event.type) {
@@ -565,7 +581,6 @@ async function handleRoute(request, { params }) {
             })
 
             await logWebhookEvent(event, 'success')
-            console.log(`Successfully processed payment for user ${userId}`)
             break
 
           case 'payment_intent.payment_failed':
@@ -583,12 +598,10 @@ async function handleRoute(request, { params }) {
             }
 
             await logWebhookEvent(event, 'processed')
-            console.log(`Payment failed for user ${failedUserId}`)
             break
 
           default:
             await logWebhookEvent(event, 'unhandled')
-            console.log(`Unhandled event type: ${event.type}`)
         }
 
         return handleCORS(NextResponse.json({ 
@@ -597,7 +610,6 @@ async function handleRoute(request, { params }) {
           timestamp: new Date().toISOString()
         }))
       } catch (error) {
-        console.error('Webhook processing error:', error)
         await logWebhookEvent(event, 'error', error.message)
         return handleCORS(NextResponse.json({ 
           error: 'Webhook processing failed',
@@ -768,6 +780,14 @@ async function handleRoute(request, { params }) {
       // Enhanced user prompt with structured information
       const enhancedPrompt = buildDocumentPrompt(documentType, category, formData, urgencyLevel)
 
+      // Check if OpenAI is available
+      if (!openai) {
+        return handleCORS(NextResponse.json({ 
+          error: 'AI document generation is currently unavailable. Please try again later.',
+          ai_service_error: true
+        }, { status: 503 }))
+      }
+
       try {
         // Generate document with OpenAI
         const completion = await openai.chat.completions.create({
@@ -823,7 +843,6 @@ async function handleRoute(request, { params }) {
           letters_remaining: result.lettersRemaining
         }))
       } catch (error) {
-        console.error('OpenAI API Error:', error)
         return handleCORS(NextResponse.json({ 
           error: 'Failed to generate document. Please try again.',
           ai_service_error: true
@@ -895,6 +914,14 @@ async function handleRoute(request, { params }) {
       Please format this as a complete, professional letter ready to send.
       `
 
+      // Check if OpenAI is available
+      if (!openai) {
+        return handleCORS(NextResponse.json({ 
+          error: 'AI letter generation is currently unavailable. Please try again later.',
+          ai_service_error: true
+        }, { status: 503 }))
+      }
+
       try {
         // Generate letter with OpenAI
         const completion = await openai.chat.completions.create({
@@ -949,7 +976,6 @@ async function handleRoute(request, { params }) {
           letters_remaining: result.lettersRemaining
         }))
       } catch (error) {
-        console.error('OpenAI API Error:', error)
         return handleCORS(NextResponse.json({ 
           error: 'Failed to generate letter. Please try again.',
           ai_service_error: true
@@ -1085,6 +1111,14 @@ async function handleRoute(request, { params }) {
         return handleCORS(NextResponse.json({ error: 'Letter not found' }, { status: 404 }))
       }
 
+      // Check if Resend is available
+      if (!resend) {
+        return handleCORS(NextResponse.json({ 
+          error: 'Email service is currently unavailable. Please try again later.',
+          email_service_error: true
+        }, { status: 503 }))
+      }
+
       try {
         await resend.emails.send({
           from: 'Talk To My Lawyer <noreply@talktomylawyer.com>',
@@ -1121,8 +1155,6 @@ async function handleRoute(request, { params }) {
           message: 'Letter sent successfully'
         }))
       } catch (error) {
-        console.error('Email sending error:', error)
-        
         // Log the email error
         await prisma.emailLog.create({
           data: {
@@ -1366,7 +1398,6 @@ async function handleRoute(request, { params }) {
     ));
 
   } catch (error) {
-    console.error('API Error:', error)
     return handleCORS(NextResponse.json(
       { 
         error: "Internal server error",

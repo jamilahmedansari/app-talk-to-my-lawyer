@@ -65,7 +65,7 @@ export const TimelineModal = ({ isOpen, onClose, letterId, subscriptionInfo }) =
         })
       })
     } catch (error) {
-      console.error('Error sending timeline email:', error)
+      // Silently handle error for production
     }
   }
 
@@ -77,7 +77,7 @@ export const TimelineModal = ({ isOpen, onClose, letterId, subscriptionInfo }) =
         setLetterData(data.letter)
       }
     } catch (error) {
-      console.error('Error fetching letter:', error)
+      // Silently handle error for production
     }
   }
 

@@ -14,28 +14,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // Get user profile from our custom users table
+    // Get user profile to check role
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select(`
-        *,
-        contractor:contractors(*),
-        admin:admins(*)
-      `)
+      .select('role')
       .eq('id', user.id)
       .single()
 
-    if (userError) {
-      return NextResponse.json({ 
-        error: 'User profile not found',
-        user: { id: user.id, email: user.email }
-      }, { status: 404 })
+    if (userError || userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    return NextResponse.json({ 
-      user: userData,
-      auth_user: user 
-    })
+    // Get all letters with user information
+    const { data: letters, error: lettersError } = await supabase
+      .from('letters')
+      .select(`
+        *,
+        user:users(name, email)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (lettersError) {
+      return NextResponse.json({ error: 'Failed to fetch letters' }, { status: 500 })
+    }
+
+    return NextResponse.json({ letters: letters || [] })
 
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (userError) {
-      console.error('Error creating user record:', userError)
       return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
     }
 
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (contractorError) {
-        console.error('Error creating contractor record:', contractorError)
+        // Silently handle error for production
       }
     }
 
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (adminError) {
-        console.error('Error creating admin record:', adminError)
+        // Silently handle error for production
       }
     }
 
@@ -87,7 +86,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Signup error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
