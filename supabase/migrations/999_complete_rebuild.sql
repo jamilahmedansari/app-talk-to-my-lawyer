@@ -1,8 +1,14 @@
 -- Complete database rebuild migration
 -- This replaces all three migrations with a working version
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Drop and create ENUM types FIRST before any tables
+DROP TYPE IF EXISTS user_role CASCADE;
+DROP TYPE IF EXISTS letter_status CASCADE;
+DROP TYPE IF EXISTS commission_status CASCADE;
+
+CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
+CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
+CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
