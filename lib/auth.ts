@@ -1,7 +1,7 @@
 // Auth Utilities
 import { getServerSupabase } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import type { UserRole, Profile } from "@/lib/types/database";
+import type { UserRole, Profile, UserRole_Table } from "@/lib/types/database";
 
 /**
  * Requires authentication. Redirects to /auth if not authenticated.
@@ -19,7 +19,7 @@ export async function requireAuth() {
 }
 
 /**
- * Gets the user's profile including their role.
+ * Gets the user's profile.
  * Returns null if not authenticated or profile doesn't exist.
  */
 export async function getUserProfile(): Promise<Profile | null> {
@@ -40,12 +40,24 @@ export async function getUserProfile(): Promise<Profile | null> {
 }
 
 /**
- * Gets just the user's role.
- * Returns null if not authenticated or no profile found.
+ * Gets the user's role from user_roles table.
+ * Returns null if not authenticated or no role found.
  */
 export async function getUserRole(): Promise<UserRole | null> {
-  const profile = await getUserProfile();
-  return profile?.role || null;
+  const supabase = await getServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .single();
+
+  return roleData?.role || null;
 }
 
 /**
