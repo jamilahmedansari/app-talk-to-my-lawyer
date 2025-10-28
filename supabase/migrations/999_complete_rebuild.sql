@@ -59,26 +59,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create ENUM types
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-    CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'letter_status') THEN
-    CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'commission_status') THEN
-    CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
-  END IF;
-END $$;
-
--- Create user_roles table
+-- Create user_roles table (enums already created at top of file)
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
