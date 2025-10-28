@@ -1,20 +1,33 @@
 // Database types for Talk-To-My-Lawyer
 
-export type UserRole = 'subscriber' | 'employee' | 'admin';
+export type UserRole = 'user' | 'employee' | 'admin';
 
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+export type SubscriptionStatus = 'active' | 'canceled' | 'expired';
 
-export type LetterStatus = 'draft' | 'completed' | 'archived';
+export type LetterStatus = 'generating' | 'completed' | 'failed';
+
+export type CommissionStatus = 'pending' | 'paid' | 'cancelled';
 
 export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: UserRole;
   phone: string | null;
   avatar_url: string | null;
+  subscription_tier: string | null;
+  subscription_status: SubscriptionStatus | null;
+  subscription_expires_at: string | null;
+  referrals: number;
+  earnings: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface UserRole_Table {
+  id: string;
+  user_id: string;
+  role: UserRole;
+  created_at: string;
 }
 
 export interface Letter {
@@ -25,6 +38,7 @@ export interface Letter {
   recipient_name: string | null;
   recipient_address: string | null;
   status: LetterStatus;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +48,11 @@ export interface Subscription {
   user_id: string;
   plan: string;
   status: SubscriptionStatus;
+  price: number | null;
+  discount: number | null;
+  coupon_code: string | null;
+  employee_id: string | null;
+  expires_at: string | null;
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
   current_period_start: string | null;
@@ -43,26 +62,36 @@ export interface Subscription {
   updated_at: string;
 }
 
-export interface Coupon {
+export interface EmployeeCoupon {
   id: string;
+  employee_id: string;
   code: string;
   discount_percent: number;
-  max_uses: number | null;
-  used_count: number;
-  expires_at: string | null;
-  active: boolean;
+  usage_count: number;
+  max_usage: number | null;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
-export interface AffiliateTransaction {
+export interface Commission {
   id: string;
-  affiliate_user_id: string;
-  referred_user_id: string;
+  employee_id: string;
+  subscription_id: string | null;
   commission_amount: number;
-  status: string;
-  paid_at: string | null;
+  status: CommissionStatus;
   created_at: string;
+  paid_at: string | null;
 }
+
+// Plan details
+export const SUBSCRIPTION_PLANS = {
+  single: { name: 'Single Letter', price: 29.99, letters: 1 },
+  annual4: { name: '4 Letters/Year', price: 99.99, letters: 4 },
+  annual8: { name: '8 Letters/Year', price: 179.99, letters: 8 },
+} as const;
+
+export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
 
 // Type guard functions
 export function isAdmin(role: UserRole): boolean {
