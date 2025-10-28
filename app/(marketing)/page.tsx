@@ -17,7 +17,7 @@ export default function Home() {
   const touchStartY = useRef(0)
   const touchStartX = useRef(0)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
-  const scrollThrottleRef = useRef<number>()
+  const scrollThrottleRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     const checkShaderReady = () => {
@@ -307,12 +307,6 @@ export default function Home() {
         <AboutSection scrollToSection={scrollToSection} />
         <ContactSection />
       </div>
-
-      <style jsx global>{`
-        div::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </main>
   )
 }
