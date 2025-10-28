@@ -56,31 +56,33 @@ export async function middleware(req: NextRequest) {
 
   // Role-based route protection
   if (user && (req.nextUrl.pathname.startsWith("/dashboard") || req.nextUrl.pathname.startsWith("/admin"))) {
-    // Get user role from profiles table
-    const { data: profile } = await supabase
-      .from("profiles")
+    // Get user role from user_roles table (Migration 003 schema)
+    const { data: userRole } = await supabase
+      .from("user_roles")
       .select("role")
-      .eq("id", user.id)
+      .eq("user_id", user.id)
       .single();
 
-    if (profile) {
+    if (userRole) {
+      const role = userRole.role;
+
       // Admin routes - require admin role
-      if (req.nextUrl.pathname.startsWith("/admin") && profile.role !== "admin") {
+      if (req.nextUrl.pathname.startsWith("/admin") && role !== "admin") {
         url.pathname = "/dashboard";
         return NextResponse.redirect(url);
       }
 
       // Employee routes - require employee or admin role
       if (req.nextUrl.pathname.startsWith("/dashboard/employee")) {
-        if (profile.role !== "employee" && profile.role !== "admin") {
+        if (role !== "employee" && role !== "admin") {
           url.pathname = "/dashboard";
           return NextResponse.redirect(url);
         }
       }
 
-      // Subscriber-only routes
+      // Subscriber-only routes - 'user' role maps to subscriber
       if (req.nextUrl.pathname.startsWith("/dashboard/subscriber")) {
-        if (profile.role !== "subscriber") {
+        if (role !== "user" && role !== "admin") {
           url.pathname = "/dashboard";
           return NextResponse.redirect(url);
         }
