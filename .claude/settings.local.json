@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dev)",
+      "Bash(npx supabase:*)",
+      "Bash(curl:*)",
+      "Bash(xargs curl -L)",
+      "Bash(tar:*)",
+      "Bash(sudo mv:*)",
+      "Bash(supabase --version:*)",
+      "Read(//tmp/**)",
+      "Bash(supabase status:*)",
+      "Bash(supabase init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(supabase db reset:*)",
+      "Bash(netlify --version:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
