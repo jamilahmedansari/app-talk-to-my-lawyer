@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
 
     const supabase = await getServerSupabase();
 
-    // Fetch the coupon
+    // Fetch the coupon from employee_coupons table
     const { data: coupon, error } = await supabase
-      .from("coupons")
+      .from("employee_coupons")
       .select("*")
       .eq("code", code.toUpperCase())
       .single();
@@ -46,23 +46,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if coupon is active
-    if (!coupon.active) {
+    if (!coupon.is_active) {
       return NextResponse.json(
         { valid: false, error: "This coupon is no longer active" },
         { status: 400 }
       );
     }
 
-    // Check if coupon has expired
-    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      return NextResponse.json(
-        { valid: false, error: "This coupon has expired" },
-        { status: 400 }
-      );
-    }
-
     // Check if coupon has reached max uses
-    if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+    if (coupon.max_usage && coupon.usage_count >= coupon.max_usage) {
       return NextResponse.json(
         { valid: false, error: "This coupon has reached its usage limit" },
         { status: 400 }
@@ -75,7 +67,6 @@ export async function GET(request: NextRequest) {
       coupon: {
         code: coupon.code,
         discount_percent: coupon.discount_percent,
-        expires_at: coupon.expires_at,
       },
     });
   } catch (error) {
