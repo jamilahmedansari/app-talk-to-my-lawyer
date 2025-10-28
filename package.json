@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:push": "supabase db push",
+    "db:gen-types": "supabase gen types typescript --linked > lib/types/database.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

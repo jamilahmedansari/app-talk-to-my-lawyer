@@ -6,6 +6,12 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const url = req.nextUrl.clone();
 
+  // Allow public routes - landing page and marketing content
+  const publicPaths = ["/", "/api/validate-coupon"];
+  if (publicPaths.includes(req.nextUrl.pathname) || req.nextUrl.pathname.startsWith("/api/checkout")) {
+    return res;
+  }
+
   // Validate environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -87,7 +93,14 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/admin/:path*",
+    /*
+     * Match all request paths except:
+     * - / (landing page)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
