@@ -102,8 +102,8 @@ export function isEmployee(role: UserRole): boolean {
   return role === 'employee';
 }
 
-export function isSubscriber(role: UserRole): boolean {
-  return role === 'subscriber';
+export function isUser(role: UserRole): boolean {
+  return role === 'user';
 }
 
 export function hasEmployeeAccess(role: UserRole): boolean {
