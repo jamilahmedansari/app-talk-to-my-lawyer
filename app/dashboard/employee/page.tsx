@@ -1,9 +1,28 @@
 import { requireEmployee, getUserProfile } from "@/lib/auth";
+import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function EmployeeDashboard() {
   await requireEmployee();
   const profile = await getUserProfile();
+  const supabase = await getServerSupabase();
+
+  // Fetch statistics
+  const [usersResult, activeSubscriptionsResult, lettersThisMonthResult] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
+    supabase
+      .from("letters")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+  ]);
+
+  const totalUsers = usersResult.count || 0;
+  const activeSubscriptions = activeSubscriptionsResult.count || 0;
+  const lettersThisMonth = lettersThisMonthResult.count || 0;
 
   return (
     <main className="mx-auto max-w-6xl p-6">
@@ -112,22 +131,18 @@ export default async function EmployeeDashboard() {
       {/* Quick Stats */}
       <section className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Total Users</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{totalUsers}</p>
           </div>
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Active Subscriptions</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{activeSubscriptions}</p>
           </div>
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Letters This Month</p>
-            <p className="text-2xl font-bold mt-1">—</p>
-          </div>
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-slate-600">Open Tickets</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{lettersThisMonth}</p>
           </div>
         </div>
       </section>

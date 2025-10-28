@@ -1,15 +1,56 @@
 import { requireAuth, getUserProfile } from "@/lib/auth";
+import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function SubscriberDashboard() {
   await requireAuth();
   const profile = await getUserProfile();
+  const supabase = await getServerSupabase();
+
+  // Fetch user's statistics
+  const [lettersResult, subscriptionResult] = await Promise.all([
+    supabase
+      .from("letters")
+      .select("id, title, status, created_at", { count: "exact" })
+      .eq("user_id", profile!.id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", profile!.id)
+      .single(),
+  ]);
+
+  const letters = lettersResult.data || [];
+  const lettersCount = lettersResult.count || 0;
+  const subscription = subscriptionResult.data;
 
   return (
     <main className="mx-auto max-w-6xl p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Subscriber Dashboard</h1>
         <p className="text-slate-600 mt-2">Welcome back, {profile?.full_name || profile?.email}</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-slate-600">Total Letters</div>
+          <div className="text-2xl font-bold mt-1">{lettersCount}</div>
+        </div>
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-slate-600">Subscription Status</div>
+          <div className="text-2xl font-bold mt-1 capitalize">
+            {subscription?.status || "No Plan"}
+          </div>
+        </div>
+        <div className="border rounded-lg p-4">
+          <div className="text-sm text-slate-600">Current Plan</div>
+          <div className="text-2xl font-bold mt-1 capitalize">
+            {subscription?.plan || "None"}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -74,8 +115,33 @@ export default async function SubscriberDashboard() {
       {/* Recent Activity */}
       <section className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div className="border rounded-lg p-6">
-          <p className="text-sm text-slate-600">No recent activity yet. Create your first letter to get started!</p>
+        <div className="border rounded-lg divide-y">
+          {letters.length === 0 ? (
+            <div className="p-6">
+              <p className="text-sm text-slate-600">No recent activity yet. Create your first letter to get started!</p>
+            </div>
+          ) : (
+            letters.map((letter) => (
+              <div key={letter.id} className="p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Link
+                      href={`/dashboard/subscriber/letters/${letter.id}`}
+                      className="font-medium hover:text-blue-600"
+                    >
+                      {letter.title}
+                    </Link>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Created {new Date(letter.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 capitalize">
+                    {letter.status}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </main>

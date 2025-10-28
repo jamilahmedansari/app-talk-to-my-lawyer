@@ -1,9 +1,27 @@
 import { requireAdmin, getUserProfile } from "@/lib/auth";
+import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
   await requireAdmin();
   const profile = await getUserProfile();
+  const supabase = await getServerSupabase();
+
+  // Fetch comprehensive admin statistics
+  const [usersResult, activeSubscriptionsResult, totalLettersResult, couponsResult] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
+    supabase.from("letters").select("id", { count: "exact", head: true }),
+    supabase.from("coupons").select("id", { count: "exact", head: true }).eq("active", true),
+  ]);
+
+  const totalUsers = usersResult.count || 0;
+  const activeSubscribers = activeSubscriptionsResult.count || 0;
+  const totalLetters = totalLettersResult.count || 0;
+  const activeCoupons = couponsResult.count || 0;
 
   return (
     <main className="mx-auto max-w-6xl p-6">
@@ -137,23 +155,23 @@ export default async function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-4">
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Total Users</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{totalUsers}</p>
             <p className="text-xs text-slate-500 mt-1">All registered users</p>
           </div>
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Active Subscribers</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{activeSubscribers}</p>
             <p className="text-xs text-slate-500 mt-1">Paying customers</p>
           </div>
           <div className="border rounded-lg p-4">
             <p className="text-sm text-slate-600">Total Letters</p>
-            <p className="text-2xl font-bold mt-1">—</p>
+            <p className="text-2xl font-bold mt-1">{totalLetters}</p>
             <p className="text-xs text-slate-500 mt-1">Generated letters</p>
           </div>
           <div className="border rounded-lg p-4">
-            <p className="text-sm text-slate-600">Monthly Revenue</p>
-            <p className="text-2xl font-bold mt-1">—</p>
-            <p className="text-xs text-slate-500 mt-1">This month</p>
+            <p className="text-sm text-slate-600">Active Coupons</p>
+            <p className="text-2xl font-bold mt-1">{activeCoupons}</p>
+            <p className="text-xs text-slate-500 mt-1">Available codes</p>
           </div>
         </div>
       </section>
