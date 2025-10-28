@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- Create letters table  
 CREATE TABLE IF NOT EXISTS public.letters (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   recipient_name TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.letters (
 
 -- Create subscriptions table
 CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plan TEXT NOT NULL,
   status TEXT DEFAULT 'active',
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 
 -- Create audit_logs table
 CREATE TABLE IF NOT EXISTS public.audit_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   resource_type TEXT,
@@ -74,7 +74,7 @@ END $$;
 
 -- Create user_roles table
 CREATE TABLE IF NOT EXISTS public.user_roles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
   role user_role NOT NULL DEFAULT 'user'::user_role,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 
 -- Create employee_coupons table
 CREATE TABLE IF NOT EXISTS public.employee_coupons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   code TEXT NOT NULL UNIQUE,
   discount_percent INTEGER NOT NULL CHECK (discount_percent >= 0 AND discount_percent <= 100),
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS public.employee_coupons (
 
 -- Create commissions table
 CREATE TABLE IF NOT EXISTS public.commissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   subscription_id UUID NOT NULL REFERENCES public.subscriptions(id) ON DELETE CASCADE,
   commission_amount NUMERIC(10,2) NOT NULL,
