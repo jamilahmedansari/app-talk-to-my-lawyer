@@ -9,8 +9,10 @@ import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
+  const router = useRouter()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -236,7 +238,7 @@ export default function Home() {
           ))}
         </div>
 
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
+        <MagneticButton variant="secondary" onClick={() => router.push('/auth')}>
           Get Started
         </MagneticButton>
       </nav>
@@ -271,7 +273,7 @@ export default function Home() {
               <MagneticButton
                 size="lg"
                 variant="primary"
-                onClick={() => scrollToSection(4)}
+                onClick={() => router.push('/auth')}
               >
                 Start Creating Letters
               </MagneticButton>
