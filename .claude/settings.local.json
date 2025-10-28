@@ -23,7 +23,11 @@
       "Bash(npm run build:*)",
       "Bash(node scripts/check-migration-status.mjs:*)",
       "Bash(node scripts/create-audit-logs.mjs:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Read(//home/codespace/**)",
+      "Read(//workspaces/**)",
+      "Read(///**)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "ask": []

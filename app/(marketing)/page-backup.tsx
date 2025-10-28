@@ -9,10 +9,8 @@ import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 
 export default function Home() {
-  const router = useRouter()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -224,9 +222,9 @@ export default function Home() {
           className="flex items-center gap-2 transition-transform hover:scale-105"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25">
-            <span className="font-sans text-xl font-bold text-foreground">T</span>
+            <span className="font-sans text-xl font-bold text-foreground">L</span>
           </div>
-          <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Talk-To-My-Lawyer</span>
+          <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Law Letter A</span>
         </button>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -248,7 +246,7 @@ export default function Home() {
           ))}
         </div>
 
-        <MagneticButton variant="secondary" onClick={() => router.push("/auth")}>
+        <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
           Sign In
         </MagneticButton>
       </nav>
@@ -265,25 +263,25 @@ export default function Home() {
         <section className="flex min-h-screen w-screen shrink-0 flex-col justify-end px-6 pb-16 pt-24 md:px-12 md:pb-24">
           <div className="max-w-3xl">
             <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md duration-700">
-              <p className="font-mono text-xs text-foreground/90">Professional Legal Documents</p>
+              <p className="font-mono text-xs text-foreground/90">AI-Powered Legal Documents</p>
             </div>
             <h1 className="mb-6 animate-in fade-in slide-in-from-bottom-8 font-sans text-6xl font-light leading-[1.1] tracking-tight text-foreground duration-1000 md:text-7xl lg:text-8xl">
               <span className="text-balance">
                 Generate Legal Letters
                 <br />
-                with Confidence
+                with AI Power
               </span>
             </h1>
             <p className="mb-8 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-lg leading-relaxed text-foreground/90 duration-1000 delay-200 md:text-xl">
               <span className="text-pretty">
-                Professional legal documents in minutes. Save time, reduce costs, and ensure accuracy.
+                Professional AI-generated legal documents in minutes. Save time, reduce costs, and ensure accuracy.
               </span>
             </p>
             <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
-              <MagneticButton size="lg" variant="primary" onClick={() => router.push("/auth")}>
+              <MagneticButton size="lg" variant="primary" onClick={() => scrollToSection(4)}>
                 Start Creating Letters
               </MagneticButton>
-              <MagneticButton size="lg" variant="secondary" onClick={() => router.push("/auth")}>
+              <MagneticButton size="lg" variant="secondary" onClick={() => scrollToSection(4)}>
                 Already have an account?
               </MagneticButton>
             </div>

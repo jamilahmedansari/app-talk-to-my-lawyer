@@ -2,10 +2,8 @@
 
 import { useReveal } from "@/hooks/use-reveal"
 import { MagneticButton } from "@/components/magnetic-button"
-import { useRouter } from "next/navigation"
 
 export function ContactSection() {
-  const router = useRouter()
   const { ref, isVisible } = useReveal(0.3)
 
   return (
@@ -35,10 +33,10 @@ export function ContactSection() {
           }`}
           style={{ transitionDelay: "200ms" }}
         >
-          <MagneticButton size="lg" variant="primary" className="w-full max-w-md"onClick={() => router.push("/auth")}>
+          <MagneticButton size="lg" variant="primary" className="w-full max-w-md">
             Get Started Now
           </MagneticButton>
-          <MagneticButton size="lg" variant="secondary" className="w-full max-w-md"onClick={() => router.push("/auth")}>
+          <MagneticButton size="lg" variant="secondary" className="w-full max-w-md">
             Already have an account?
           </MagneticButton>
         </div>

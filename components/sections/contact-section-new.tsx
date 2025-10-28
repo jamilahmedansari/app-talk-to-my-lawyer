@@ -2,10 +2,8 @@
 
 import { useReveal } from "@/hooks/use-reveal"
 import { MagneticButton } from "@/components/magnetic-button"
-import { useRouter } from "next/navigation"
 
 export function ContactSection() {
-  const router = useRouter()
   const { ref, isVisible } = useReveal(0.3)
 
   return (
@@ -25,7 +23,7 @@ export function ContactSection() {
             Legal Letter?
           </h2>
           <p className="mx-auto max-w-2xl text-base leading-relaxed text-foreground/80 md:text-xl">
-            Join thousands of users who trust Talk-To-My-Lawyer for their legal document needs.
+            Join thousands of users who trust Law Letter AI for their legal document needs.
           </p>
         </div>
 
@@ -35,10 +33,10 @@ export function ContactSection() {
           }`}
           style={{ transitionDelay: "200ms" }}
         >
-          <MagneticButton size="lg" variant="primary" className="w-full max-w-md"onClick={() => router.push("/auth")}>
+          <MagneticButton size="lg" variant="primary" className="w-full max-w-md">
             Get Started Now
           </MagneticButton>
-          <MagneticButton size="lg" variant="secondary" className="w-full max-w-md"onClick={() => router.push("/auth")}>
+          <MagneticButton size="lg" variant="secondary" className="w-full max-w-md">
             Already have an account?
           </MagneticButton>
         </div>
@@ -53,10 +51,10 @@ export function ContactSection() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/15">
               <span className="font-sans text-sm font-bold text-foreground">L</span>
             </div>
-            <span className="font-sans text-lg font-semibold text-foreground">Talk-To-My-Lawyer</span>
+            <span className="font-sans text-lg font-semibold text-foreground">Law Letter AI</span>
           </div>
           <p className="font-mono text-xs text-foreground/60 md:text-sm">
-            © 2025 Talk-To-My-Lawyer. Professional legal document generation 
+            © 2025 Law Letter AI. Professional legal document generation powered by AI.
           </p>
         </div>
       </div>
