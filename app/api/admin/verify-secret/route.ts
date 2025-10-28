@@ -4,6 +4,12 @@ import {
   constantTimeEqual,
   getClientIdentifier,
 } from "@/lib/rate-limit";
+import {
+  logAuditEvent,
+  logRateLimitExceeded,
+  logInvalidInput,
+  getClientInfo,
+} from "@/lib/audit-log";
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +21,9 @@ export async function POST(request: Request) {
     });
 
     if (!rateLimitResult.success) {
+      // Log rate limit violation
+      await logRateLimitExceeded(request, "/api/admin/verify-secret");
+
       const resetDate = new Date(rateLimitResult.reset);
       return NextResponse.json(
         {
@@ -37,6 +46,17 @@ export async function POST(request: Request) {
 
     // Validate input
     if (!secretKey || typeof secretKey !== "string" || secretKey.length > 100) {
+      // Log invalid input attempt
+      await logInvalidInput(
+        request,
+        "secretKey",
+        !secretKey
+          ? "missing"
+          : typeof secretKey !== "string"
+          ? "invalid type"
+          : "too long"
+      );
+
       return NextResponse.json(
         { valid: false, error: "Invalid request" },
         { status: 400 }
@@ -55,6 +75,20 @@ export async function POST(request: Request) {
 
     // Use constant-time comparison to prevent timing attacks
     const isValid = constantTimeEqual(secretKey, validSecret);
+
+    // Log verification attempt
+    const { ipAddress, userAgent } = getClientInfo(request);
+    await logAuditEvent({
+      eventType: "admin_secret_verified",
+      action: isValid
+        ? "Admin secret verified successfully"
+        : "Failed admin secret verification attempt",
+      ipAddress,
+      userAgent,
+      metadata: {
+        success: isValid,
+      },
+    });
 
     return NextResponse.json({ valid: isValid });
   } catch (error) {
