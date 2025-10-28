@@ -1,4 +1,4 @@
--- Law Letter AI - Initial Schema Migration
+-- Talk-To-My-Lawyer - Initial Schema Migration
 -- Phase 10: Database structure placeholders
 
 -- TODO: Implement Users table
