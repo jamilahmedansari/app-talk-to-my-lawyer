@@ -41,7 +41,7 @@ export default function GenerateLetterPage() {
     e.preventDefault();
     
     if (!quota.canGenerate) {
-      alert("You've reached your monthly letter limit. Please upgrade your subscription.");
+      alert("You have reached your monthly letter limit. Please upgrade your subscription.");
       return;
     }
 
@@ -109,7 +109,7 @@ export default function GenerateLetterPage() {
           {!quota.canGenerate && (
             <div className="mt-3 p-3 bg-yellow-100 border border-yellow-300 rounded">
               <p className="text-yellow-800 text-sm font-medium">
-                ⚠️ You've used all your letters this month. Please upgrade your plan.
+                ⚠️ You&apos;ve used all your letters this month. Please upgrade your plan.
               </p>
             </div>
           )}

@@ -1,75 +1,183 @@
-// PDF Utilities
+// PDF Utilities - Professional Letter PDF Generation
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import type { Letter } from "./types/database";
 
 /**
- * Generate a PDF buffer from a letter
- * In production, you would use a library like pdf-lib, jsPDF, or Puppeteer
+ * Generate a professional PDF from a letter using pdf-lib
+ * @param letter - The letter object from the database
+ * @returns PDF as a Buffer
  */
 export async function generateLetterPDF(letter: Letter): Promise<Buffer> {
-  // Simple text-based PDF generation
-  // In production, replace this with proper PDF generation using pdf-lib or similar
-  
-  const pdfContent = `
-%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 5 0 R >>
-endobj
-4 0 obj
-<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>
-endobj
-5 0 obj
-<< /Length 500 >>
-stream
-BT
-/F1 12 Tf
-50 750 Td
-(${letter.title}) Tj
-0 -20 Td
-(${new Date(letter.created_at).toLocaleDateString()}) Tj
-0 -40 Td
-${letter.recipient_name ? `(To: ${letter.recipient_name}) Tj` : ''}
-${letter.recipient_address ? `0 -20 Td (${letter.recipient_address}) Tj` : ''}
-0 -40 Td
-(${letter.content.substring(0, 500)}) Tj
-ET
-endstream
-endobj
-xref
-0 6
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-0000000214 00000 n
-0000000298 00000 n
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-850
-%%EOF
-  `.trim();
+  try {
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create();
 
-  return Buffer.from(pdfContent, 'utf-8');
+    // Add a page with US Letter dimensions (612 x 792 points)
+    const page = pdfDoc.addPage([612, 792]);
+
+    // Get fonts
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    // Page dimensions
+    const { width, height } = page.getSize();
+    const margin = 72; // 1 inch margins
+    const maxWidth = width - 2 * margin;
+
+    let yPosition = height - margin;
+
+    // Helper function to draw text with word wrapping
+    const drawText = (
+      text: string,
+      fontSize: number,
+      useFont = font,
+      isBold = false
+    ): void => {
+      const lines = wrapText(text, maxWidth, fontSize, useFont);
+
+      lines.forEach((line) => {
+        if (yPosition < margin + 50) {
+          // Add new page if needed
+          const newPage = pdfDoc.addPage([612, 792]);
+          yPosition = newPage.getHeight() - margin;
+        }
+
+        page.drawText(line, {
+          x: margin,
+          y: yPosition,
+          size: fontSize,
+          font: useFont,
+          color: rgb(0, 0, 0),
+        });
+
+        yPosition -= fontSize + 4; // Line spacing
+      });
+    };
+
+    // Format date
+    const date = new Date(letter.created_at).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    // Draw date
+    drawText(date, 11);
+    yPosition -= 20;
+
+    // Draw recipient address if available
+    if (letter.recipient_address) {
+      drawText(letter.recipient_address, 11);
+      yPosition -= 20;
+    }
+
+    // Draw recipient name/salutation
+    if (letter.recipient_name) {
+      drawText(`Dear ${letter.recipient_name},`, 11, fontBold);
+    } else {
+      drawText("Dear Sir/Madam,", 11, fontBold);
+    }
+    yPosition -= 20;
+
+    // Draw title (RE: line)
+    drawText(`RE: ${letter.title}`, 11, fontBold);
+    yPosition -= 20;
+
+    // Draw letter content
+    const content = letter.content || "";
+    const paragraphs = content.split("\n\n");
+
+    paragraphs.forEach((paragraph) => {
+      if (paragraph.trim()) {
+        drawText(paragraph.trim(), 11);
+        yPosition -= 10; // Paragraph spacing
+      }
+    });
+
+    // Serialize the PDF to bytes
+    const pdfBytes = await pdfDoc.save();
+
+    return Buffer.from(pdfBytes);
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    throw new Error("Failed to generate PDF");
+  }
 }
 
-export function downloadLetterPDF(name: string, content: string): void {
-  // Client-side PDF download
-  const element = document.createElement('a');
-  const blob = new Blob([content], { type: 'application/pdf' });
+/**
+ * Word wrapping helper function
+ */
+function wrapText(
+  text: string,
+  maxWidth: number,
+  fontSize: number,
+  font: any
+): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+/**
+ * Client-side PDF download helper
+ * @param name - Filename (without extension)
+ * @param pdfBuffer - PDF data as Buffer or Uint8Array
+ */
+export function downloadLetterPDF(name: string, pdfBuffer: ArrayBuffer): void {
+  const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+  const element = document.createElement("a");
   element.href = URL.createObjectURL(blob);
   element.download = `${name}.pdf`;
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
+  URL.revokeObjectURL(element.href);
 }
 
+/**
+ * Generate PDF from plain text content
+ * @deprecated Use generateLetterPDF with Letter object instead
+ */
 export async function generatePDF(content: string): Promise<Blob> {
-  // Simple PDF generation
-  return new Blob([content], { type: 'application/pdf' });
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([612, 792]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+  const lines = content.split("\n");
+  let yPosition = page.getHeight() - 72;
+
+  lines.forEach((line) => {
+    if (yPosition < 72) {
+      return;
+    }
+    page.drawText(line, {
+      x: 72,
+      y: yPosition,
+      size: 11,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= 15;
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  return new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
 }

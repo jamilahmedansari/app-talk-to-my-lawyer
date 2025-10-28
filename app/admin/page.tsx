@@ -15,7 +15,7 @@ export default async function AdminDashboard() {
       .select("id", { count: "exact", head: true })
       .eq("status", "active"),
     supabase.from("letters").select("id", { count: "exact", head: true }),
-    supabase.from("coupons").select("id", { count: "exact", head: true }).eq("active", true),
+    supabase.from("employee_coupons").select("id", { count: "exact", head: true }).eq("is_active", true),
   ]);
 
   const totalUsers = usersResult.count || 0;

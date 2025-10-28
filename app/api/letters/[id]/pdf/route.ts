@@ -4,9 +4,10 @@ import { generateLetterPDF } from "@/lib/pdf";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await getServerSupabase();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -18,7 +19,7 @@ export async function GET(
     const { data: letter, error: fetchError } = await supabase
       .from("letters")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (fetchError || !letter) {
@@ -43,10 +44,10 @@ export async function GET(
     const pdfBuffer = await generateLetterPDF(letter);
 
     // Return PDF
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="letter-${params.id}.pdf"`,
+        "Content-Disposition": `attachment; filename="letter-${id}.pdf"`,
       },
     });
   } catch (error) {

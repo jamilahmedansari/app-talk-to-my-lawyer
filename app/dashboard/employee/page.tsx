@@ -28,7 +28,7 @@ export default async function EmployeeDashboard() {
     <main className="mx-auto max-w-6xl p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Employee Dashboard</h1>
-        <p className="text-slate-600 mt-2">Welcome, {profile?.full_name || profile?.email} ({profile?.role})</p>
+        <p className="text-slate-600 mt-2">Welcome, {profile?.full_name || profile?.email} (Employee)</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
