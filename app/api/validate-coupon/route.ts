@@ -6,9 +6,25 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
 
+    // Validate input: required, max length, and format
     if (!code) {
       return NextResponse.json(
         { valid: false, error: "Coupon code is required" },
+        { status: 400 }
+      );
+    }
+
+    if (code.length > 50) {
+      return NextResponse.json(
+        { valid: false, error: "Coupon code is too long" },
+        { status: 400 }
+      );
+    }
+
+    // Only allow alphanumeric characters, hyphens, and underscores
+    if (!/^[A-Za-z0-9_-]+$/.test(code)) {
+      return NextResponse.json(
+        { valid: false, error: "Invalid coupon code format" },
         { status: 400 }
       );
     }

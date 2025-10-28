@@ -1,8 +1,47 @@
 import { NextResponse } from "next/server";
+import {
+  rateLimit,
+  constantTimeEqual,
+  getClientIdentifier,
+} from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    // Apply rate limiting: 5 attempts per 15 minutes
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(`admin-verify:${identifier}`, {
+      maxRequests: 5,
+      windowMs: 15 * 60 * 1000, // 15 minutes
+    });
+
+    if (!rateLimitResult.success) {
+      const resetDate = new Date(rateLimitResult.reset);
+      return NextResponse.json(
+        {
+          valid: false,
+          error: "Too many attempts. Please try again later.",
+          resetAt: resetDate.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+            ),
+          },
+        }
+      );
+    }
+
     const { secretKey } = await request.json();
+
+    // Validate input
+    if (!secretKey || typeof secretKey !== "string" || secretKey.length > 100) {
+      return NextResponse.json(
+        { valid: false, error: "Invalid request" },
+        { status: 400 }
+      );
+    }
 
     // Verify against environment variable
     const validSecret = process.env.ADMIN_SIGNUP_SECRET;
@@ -14,7 +53,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = secretKey === validSecret;
+    // Use constant-time comparison to prevent timing attacks
+    const isValid = constantTimeEqual(secretKey, validSecret);
 
     return NextResponse.json({ valid: isValid });
   } catch (error) {
