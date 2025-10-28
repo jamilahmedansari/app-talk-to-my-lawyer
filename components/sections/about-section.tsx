@@ -40,7 +40,7 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
                 makes professional legal letters accessible to everyone.
               </p>
               <p className="max-w-md text-sm leading-relaxed text-foreground/70 md:text-lg">
-                We believe technology should empower everyone with legal tools. That's why we created an intuitive
+                We believe technology should empower everyone with legal tools. That&apos;s why we created an intuitive
                 platform that combines advanced capabilities with user-friendly design.
               </p>
             </div>
