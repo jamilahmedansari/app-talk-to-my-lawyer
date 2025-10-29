@@ -12,7 +12,7 @@ ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
 
 -- Create purchases table for tracking mock checkouts
 CREATE TABLE IF NOT EXISTS public.purchases (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   subscription_id UUID REFERENCES public.subscriptions(id) ON DELETE SET NULL,
   tier TEXT NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.purchases (
 
 -- Create refill_history table for tracking letter refills
 CREATE TABLE IF NOT EXISTS public.refill_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subscription_id UUID NOT NULL REFERENCES public.subscriptions(id) ON DELETE CASCADE,
   letters_refilled INTEGER NOT NULL,
   refilled_at TIMESTAMPTZ DEFAULT NOW()
