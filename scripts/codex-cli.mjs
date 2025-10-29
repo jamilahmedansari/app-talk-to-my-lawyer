@@ -125,6 +125,31 @@ async function runCodex(prompt) {
 // Get prompt from command line args or stdin
 const args = process.argv.slice(2);
 
+// Handle commands
+if (args[0] === 'login') {
+  await login();
+  process.exit(0);
+} else if (args[0] === 'logout') {
+  if (fs.existsSync(CONFIG_FILE)) {
+    fs.unlinkSync(CONFIG_FILE);
+    console.log('✅ Logged out successfully\n');
+  } else {
+    console.log('ℹ️  Not logged in\n');
+  }
+  process.exit(0);
+} else if (args[0] === 'status') {
+  const key = loadApiKey();
+  if (key) {
+    console.log('✅ API key is configured');
+    console.log(`   Source: ${process.env.OPENAI_API_KEY ? 'Environment variable' : 'Config file'}`);
+    console.log(`   Key: ${key.substring(0, 7)}...${key.substring(key.length - 4)}\n`);
+  } else {
+    console.log('❌ No API key configured');
+    console.log('   Run: codex login\n');
+  }
+  process.exit(0);
+}
+
 if (args.length > 0) {
   // Run with command line argument
   const prompt = args.join(' ');
@@ -147,8 +172,12 @@ if (args.length > 0) {
     }
   });
 } else {
-  // Interactive mode
+  // Interactive mode - show help
   console.log('🤖 OpenAI Codex CLI\n');
+  console.log('Commands:');
+  console.log('   codex login                    Configure your API key');
+  console.log('   codex logout                   Remove saved API key');
+  console.log('   codex status                   Check configuration\n');
   console.log('Usage:');
   console.log('   codex "Write a function to reverse a string"');
   console.log('   echo "Explain async/await" | codex\n');
