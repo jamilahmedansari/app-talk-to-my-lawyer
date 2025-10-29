@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://dpvrovxcxwspgbbvysil.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdnJvdnhjeHdzcGdiYnZ5c2lsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MDg0MjgsImV4cCI6MjA3Mjk4NDQyOH0.KaYL6xK951yOZjivQ7MFQOYI7r2335awU1GqIfD5Njc",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
+    "JWT_SECRET": "@jwt-secret",
+    "GEMINI_API_KEY": "@gemini-api-key",
+    "NEXT_PUBLIC_GEMINI_MODEL": "gemini-1.5-pro",
+    "ADMIN_SIGNUP_SECRET": "@admin-signup-secret",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
