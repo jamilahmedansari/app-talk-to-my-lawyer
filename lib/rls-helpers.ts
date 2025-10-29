@@ -98,40 +98,23 @@ export async function checkLetterQuota(userId: string): Promise<{
       return { canGenerate: false, remaining: 0, total: 0 };
     }
 
-    // Get active subscription details
+    // Get active subscription details for letters_remaining
     const { data: subscription } = await supabase
       .from("subscriptions")
-      .select("plan")
+      .select("tier, letters_remaining, monthly_allocation")
       .eq("user_id", userId)
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
-    // Determine max letters based on plan
-    let maxLetters = 0;
-    if (subscription?.plan === 'single') maxLetters = 1;
-    else if (subscription?.plan === 'annual4') maxLetters = 4;
-    else if (subscription?.plan === 'annual8') maxLetters = 8;
-
-    // Get current month's letter count
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const { count } = await supabase
-      .from("letters")
-      .select("*", { count: 'exact', head: true })
-      .eq("user_id", userId)
-      .gte("created_at", startOfMonth.toISOString());
-
-    const used = count || 0;
-    const remaining = Math.max(0, maxLetters - used);
+    const remaining = subscription?.letters_remaining || 0;
+    const total = subscription?.monthly_allocation || 0;
 
     return {
-      canGenerate: data === true,
+      canGenerate: data === true && remaining > 0,
       remaining,
-      total: maxLetters
+      total
     };
   } catch (error) {
     console.error("Error checking letter quota:", error);
