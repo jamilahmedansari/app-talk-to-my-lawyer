@@ -82,22 +82,34 @@ export async function POST(request: NextRequest) {
     // Create subscription record
     // Note: In production, integrate with Stripe here
     const expiresAt = new Date();
-    if (plan === "single") {
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
-    } else {
+    const nextRefillDate = new Date();
+    
+    if (plans[plan].is_recurring) {
+      // Annual plans expire in 1 year, refill monthly
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+      nextRefillDate.setMonth(nextRefillDate.getMonth() + 1);
+    } else {
+      // One-time plan expires in 30 days, no refill
+      expiresAt.setDate(expiresAt.getDate() + 30);
     }
+
+    // Generate mock payment ID
+    const paymentId = `DEMO-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     const { data: subscription, error: subError } = await supabase
       .from("subscriptions")
       .insert({
         user_id: user.id,
         plan,
+        tier: plan,
         price: plans[plan].price,
         discount,
         coupon_code: coupon_code?.toUpperCase() || null,
         employee_id: employeeId,
         status: "active",
+        letters_remaining: plans[plan].letters,
+        monthly_allocation: plans[plan].monthly_allocation,
+        next_refill_date: plans[plan].is_recurring ? nextRefillDate.toISOString() : null,
         expires_at: expiresAt.toISOString(),
       })
       .select()
@@ -109,6 +121,22 @@ export async function POST(request: NextRequest) {
         { error: "Failed to create subscription" },
         { status: 500 }
       );
+    }
+
+    // Create purchase record
+    const { error: purchaseError } = await supabase
+      .from("purchases")
+      .insert({
+        user_id: user.id,
+        subscription_id: subscription.id,
+        tier: plan,
+        amount: price,
+        payment_id: paymentId,
+      });
+
+    if (purchaseError) {
+      console.error("Error creating purchase record:", purchaseError);
+      // Continue anyway, subscription is created
     }
 
     // Update profile subscription status
@@ -124,6 +152,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       subscription,
+      paymentId,
       finalPrice: price,
       message: "Subscription created successfully",
     });
