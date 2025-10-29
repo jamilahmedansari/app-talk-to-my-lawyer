@@ -108,10 +108,13 @@ BEGIN
   IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed') THEN
     UPDATE public.subscriptions
     SET letters_remaining = GREATEST(letters_remaining - 1, 0)
-    WHERE user_id = NEW.user_id
-    AND status = 'active'
-    ORDER BY created_at DESC
-    LIMIT 1;
+    WHERE id = (
+      SELECT id FROM public.subscriptions
+      WHERE user_id = NEW.user_id
+      AND status = 'active'
+      ORDER BY created_at DESC
+      LIMIT 1
+    );
   END IF;
   
   RETURN NEW;
