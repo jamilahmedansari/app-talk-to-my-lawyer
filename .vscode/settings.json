@@ -1,5 +1,5 @@
 {
-  "deno.enable": false,
+  "deno.enable": true,
   "deno.enablePaths": [],
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
