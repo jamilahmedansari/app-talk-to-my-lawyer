@@ -454,6 +454,12 @@ CREATE TRIGGER tr_handle_subscription_insert
   AFTER INSERT ON public.subscriptions
   FOR EACH ROW EXECUTE FUNCTION public.handle_subscription_insert();
 
+-- Trigger for automatic quota decrement
+DROP TRIGGER IF EXISTS tr_decrement_letter_quota ON public.letters;
+CREATE TRIGGER tr_decrement_letter_quota
+  AFTER INSERT OR UPDATE ON public.letters
+  FOR EACH ROW EXECUTE FUNCTION public.decrement_letter_quota();
+
 -- ====================================
 -- PART 6: ROW LEVEL SECURITY (RLS)
 -- ====================================
@@ -466,6 +472,8 @@ ALTER TABLE public.employee_coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.commissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.refill_history ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies
 DROP POLICY IF EXISTS p_profiles_self_read ON public.profiles;
@@ -544,6 +552,23 @@ WITH CHECK (is_admin());
 -- AUDIT_LOGS POLICIES
 CREATE POLICY p_audit_admin_read ON public.audit_logs
 FOR SELECT USING (is_admin());
+
+-- PURCHASES POLICIES
+CREATE POLICY p_purchases_select_own ON public.purchases
+  FOR SELECT USING (auth.uid() = user_id OR is_admin() OR is_employee());
+
+CREATE POLICY p_purchases_insert ON public.purchases
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- REFILL_HISTORY POLICIES
+CREATE POLICY p_refill_history_select ON public.refill_history
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.subscriptions
+      WHERE id = refill_history.subscription_id
+      AND (user_id = auth.uid() OR is_admin() OR is_employee())
+    )
+  );
 
 -- ====================================
 -- PART 7: GRANT PERMISSIONS
