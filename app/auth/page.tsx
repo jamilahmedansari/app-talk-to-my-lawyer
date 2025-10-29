@@ -11,6 +11,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<"user" | "employee">("user");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export default function AuthPage() {
           options: {
             data: {
               full_name: fullName,
+              role: role,
             },
           },
         });
@@ -143,13 +145,30 @@ export default function AuthPage() {
           minLength={6}
         />
         {mode === "signup" && (
-          <Input
-            placeholder="Full name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            disabled={loading}
-          />
+          <>
+            <Input
+              placeholder="Full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              disabled={loading}
+            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                I am signing up as:
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as "user" | "employee")}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loading}
+                required
+              >
+                <option value="user">Client (seeking legal services)</option>
+                <option value="employee">Employee (providing legal services)</option>
+              </select>
+            </div>
+          </>
         )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading

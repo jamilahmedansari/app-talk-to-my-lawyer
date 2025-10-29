@@ -225,8 +225,8 @@ COMMENT ON FUNCTION public.touch_updated_at IS 'Automatically updates updated_at
 
 -- New user signup handler
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER 
-LANGUAGE PLPGSQL 
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
 SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -236,9 +236,9 @@ BEGIN
   VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'full_name',''))
   ON CONFLICT (id) DO NOTHING;
 
-  -- Insert default role
+  -- Insert role from metadata, default to 'user' if not provided
   INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, 'user'::user_role)
+  VALUES (NEW.id, COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'user'::user_role))
   ON CONFLICT (user_id) DO NOTHING;
 
   RETURN NEW;

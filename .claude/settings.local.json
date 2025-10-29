@@ -27,7 +27,13 @@
       "Read(//home/codespace/**)",
       "Read(//workspaces/**)",
       "Read(///**)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(echo:*)",
+      "Bash(if [ -z \"$DATABASE_URL\" ])",
+      "Bash(then echo \"DATABASE_URL not set\")",
+      "Bash(else echo \"DATABASE_URL is set\")",
+      "Bash(fi)",
+      "Bash(supabase db push:*)"
     ],
     "deny": [],
     "ask": []
