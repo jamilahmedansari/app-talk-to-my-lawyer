@@ -33,7 +33,9 @@
       "Bash(then echo \"DATABASE_URL not set\")",
       "Bash(else echo \"DATABASE_URL is set\")",
       "Bash(fi)",
-      "Bash(supabase db push:*)"
+      "Bash(supabase db push:*)",
+      "Bash(git push:*)",
+      "Bash(vercel:*)"
     ],
     "deny": [],
     "ask": []

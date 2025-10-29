@@ -1,29 +1,29 @@
 import { requireEmployee, getUserProfile } from "@/lib/auth";
 import { getServerSupabase } from "@/lib/supabase/server";
-import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { EmployeeDashboardClient } from "./client";
 
 export default async function EmployeeDashboard() {
   await requireEmployee();
   const profile = await getUserProfile();
   const supabase = await getServerSupabase();
 
-  // Fetch statistics
-  const [usersResult, activeSubscriptionsResult, lettersThisMonthResult] = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase
-      .from("subscriptions")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active"),
-    supabase
-      .from("letters")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-  ]);
+  // Fetch employee coupon
+  const { data: couponData } = await supabase
+    .from("employee_coupons")
+    .select("code, usage_count, discount_percent")
+    .eq("employee_id", profile!.id)
+    .eq("is_active", true)
+    .single();
 
-  const totalUsers = usersResult.count || 0;
-  const activeSubscriptions = activeSubscriptionsResult.count || 0;
-  const lettersThisMonth = lettersThisMonthResult.count || 0;
+  // Fetch total earnings (commissions)
+  const { data: commissionsData } = await supabase
+    .from("commissions")
+    .select("commission_amount")
+    .eq("employee_id", profile!.id);
+
+  const totalRevenue = commissionsData?.reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
+  const totalPoints = couponData?.usage_count || 0;
 
   return (
     <>
@@ -34,125 +34,43 @@ export default async function EmployeeDashboard() {
       <main className="mx-auto max-w-6xl p-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Employee Dashboard</h1>
-          <p className="text-slate-600 mt-2">Welcome, {profile?.full_name || profile?.email} (Employee)</p>
+          <p className="text-slate-600 mt-2">
+            Welcome, {profile?.full_name || profile?.email}
+          </p>
         </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* All Letters Card */}
-        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div className="font-semibold text-lg">All Letters</div>
-          </div>
-          <p className="text-sm text-slate-600 mb-4">View and manage all user letters</p>
-          <Link
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            href="/dashboard/employee/letters"
-          >
-            View Letters →
-          </Link>
+        {/* Stats Grid */}
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
+          {/* Coupon Code Card */}
+          <EmployeeDashboardClient
+            couponCode={couponData?.code || "Loading..."}
+            discountPercent={couponData?.discount_percent || 20}
+            points={totalPoints}
+            revenue={totalRevenue}
+          />
         </div>
 
-        {/* Users Card */}
-        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div className="font-semibold text-lg">Users</div>
-          </div>
-          <p className="text-sm text-slate-600 mb-4">View all registered users</p>
-          <Link
-            className="text-sm text-green-600 hover:text-green-700 font-medium"
-            href="/dashboard/employee/users"
-          >
-            View Users →
-          </Link>
+        {/* Info Section */}
+        <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+          <h2 className="text-lg font-semibold text-blue-900 mb-2">
+            How It Works
+          </h2>
+          <ul className="space-y-2 text-sm text-blue-800">
+            <li>
+              <strong>Share Your Coupon:</strong> Give your unique coupon code to
+              subscribers for a {couponData?.discount_percent || 20}% discount
+            </li>
+            <li>
+              <strong>Earn Points:</strong> Get 1 point for each successful signup
+              using your coupon
+            </li>
+            <li>
+              <strong>Earn Revenue:</strong> Receive 5% commission on each paid
+              subscription using your coupon
+            </li>
+          </ul>
         </div>
-
-        {/* Subscriptions Card */}
-        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <div className="font-semibold text-lg">Subscriptions</div>
-          </div>
-          <p className="text-sm text-slate-600 mb-4">View all user subscriptions</p>
-          <Link
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-            href="/dashboard/employee/subscriptions"
-          >
-            View Subscriptions →
-          </Link>
-        </div>
-
-        {/* Support Tickets Card */}
-        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div className="font-semibold text-lg">Support</div>
-          </div>
-          <p className="text-sm text-slate-600 mb-4">Manage support tickets</p>
-          <Link
-            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-            href="/dashboard/employee/support"
-          >
-            View Tickets →
-          </Link>
-        </div>
-
-        {/* Reports Card */}
-        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div className="font-semibold text-lg">Reports</div>
-          </div>
-          <p className="text-sm text-slate-600 mb-4">View analytics and reports</p>
-          <Link
-            className="text-sm text-red-600 hover:text-red-700 font-medium"
-            href="/dashboard/employee/reports"
-          >
-            View Reports →
-          </Link>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <section className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-slate-600">Total Users</p>
-            <p className="text-2xl font-bold mt-1">{totalUsers}</p>
-          </div>
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-slate-600">Active Subscriptions</p>
-            <p className="text-2xl font-bold mt-1">{activeSubscriptions}</p>
-          </div>
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-slate-600">Letters This Month</p>
-            <p className="text-2xl font-bold mt-1">{lettersThisMonth}</p>
-          </div>
-        </div>
-      </section>
-    </main>
+      </main>
     </>
   );
 }
