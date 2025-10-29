@@ -18,10 +18,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Define plan prices
-    const plans: Record<string, { price: number; name: string }> = {
-      single: { price: 29.99, name: "Single Letter" },
-      annual4: { price: 99.99, name: "4 Letters/Year" },
-      annual8: { price: 179.99, name: "8 Letters/Year" },
+    const plans: Record<string, { price: number; name: string; letters: number; monthly_allocation: number; is_recurring: boolean }> = {
+      "one-time": { 
+        price: 199.00, 
+        name: "One-Time Letter", 
+        letters: 1, 
+        monthly_allocation: 1,
+        is_recurring: false 
+      },
+      "annual-basic": { 
+        price: 2388.00, 
+        name: "Annual Basic", 
+        letters: 48, 
+        monthly_allocation: 4,
+        is_recurring: true 
+      },
+      "annual-premium": { 
+        price: 7200.00, 
+        name: "Annual Premium", 
+        letters: 96, 
+        monthly_allocation: 8,
+        is_recurring: true 
+      },
     };
 
     if (!plans[plan]) {
