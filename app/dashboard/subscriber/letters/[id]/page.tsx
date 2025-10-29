@@ -16,10 +16,6 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
   const [attorneyName, setAttorneyName] = useState("");
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    fetchLetter();
-  }, [params.id]);
-
   const fetchLetter = async () => {
     try {
       const response = await fetch(`/api/letters/${params.id}`);
@@ -44,6 +40,11 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLetter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
 
   const handleSendEmail = async () => {
     if (!attorneyEmail) {
