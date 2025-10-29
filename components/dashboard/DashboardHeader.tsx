@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 interface DashboardHeaderProps {
-  userName?: string;
-  userEmail?: string;
+  userName?: string | null;
+  userEmail?: string | null;
 }
 
 export function DashboardHeader({ userName, userEmail }: DashboardHeaderProps) {
