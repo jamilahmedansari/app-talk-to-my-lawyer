@@ -1,9 +1,6 @@
 "use client";
-import { createBrowserClient } from "@supabase/ssr";
-import { getRequiredEnv } from "@/lib/env-validation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type { Database } from "@/lib/types/database";
 
-// Validate and get required environment variables
-const supabaseUrl = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-const supabaseAnonKey = getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Create the Supabase client for client-side usage with proper environment variable handling
+export const supabase = createClientComponentClient<Database>();

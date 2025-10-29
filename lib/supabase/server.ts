@@ -1,6 +1,8 @@
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getRequiredEnv } from "@/lib/env-validation";
+import type { Database } from "@/lib/types/database";
 
 export async function getServerSupabase() {
   const cookieStore = await cookies();
@@ -27,3 +29,8 @@ export async function getServerSupabase() {
     }
   );
 }
+
+export const createServerSupabaseClient = () => {
+  const cookieStore = cookies();
+  return createServerComponentClient<Database>({ cookies: () => cookieStore });
+};
