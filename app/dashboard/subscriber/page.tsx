@@ -1,6 +1,7 @@
 import { requireAuth, getUserProfile } from "@/lib/auth";
 import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 export default async function SubscriberDashboard() {
   await requireAuth();
@@ -27,11 +28,16 @@ export default async function SubscriberDashboard() {
   const subscription = subscriptionResult.data;
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Subscriber Dashboard</h1>
-        <p className="text-slate-600 mt-2">Welcome back, {profile?.full_name || profile?.email}</p>
-      </div>
+    <>
+      <DashboardHeader
+        userName={profile?.full_name}
+        userEmail={profile?.email}
+      />
+      <main className="mx-auto max-w-6xl p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Subscriber Dashboard</h1>
+          <p className="text-slate-600 mt-2">Welcome back, {profile?.full_name || profile?.email}</p>
+        </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
@@ -145,5 +151,6 @@ export default async function SubscriberDashboard() {
         </div>
       </section>
     </main>
+    </>
   );
 }
