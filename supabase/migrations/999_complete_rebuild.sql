@@ -10,10 +10,6 @@ CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
 CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
 CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
 
--- Re-add status columns that were dropped by CASCADE
-ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
-ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
-
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
