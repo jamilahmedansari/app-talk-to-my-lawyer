@@ -342,6 +342,69 @@ END $$;
 
 COMMENT ON FUNCTION public.handle_subscription_insert IS 'Automatically creates commission, updates earnings, and increments coupon usage when subscription is created with coupon';
 
+-- Process subscription refills (for cron job)
+CREATE OR REPLACE FUNCTION public.process_subscription_refills()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  refill_count INTEGER := 0;
+  sub_record RECORD;
+BEGIN
+  -- Find subscriptions that need refilling
+  FOR sub_record IN
+    SELECT id, user_id, tier, monthly_allocation, next_refill_date
+    FROM public.subscriptions
+    WHERE status = 'active'
+    AND tier IN ('annual-basic', 'annual-premium')
+    AND next_refill_date <= NOW()
+  LOOP
+    -- Refill the letters
+    UPDATE public.subscriptions
+    SET letters_remaining = monthly_allocation,
+        next_refill_date = next_refill_date + INTERVAL '1 month'
+    WHERE id = sub_record.id;
+
+    -- Log the refill
+    INSERT INTO public.refill_history (subscription_id, letters_refilled)
+    VALUES (sub_record.id, sub_record.monthly_allocation);
+
+    refill_count := refill_count + 1;
+  END LOOP;
+
+  RETURN refill_count;
+END;
+$$;
+
+COMMENT ON FUNCTION public.process_subscription_refills IS 'Processes monthly letter refills for active annual subscriptions';
+
+-- Decrement letter quota when letter is completed
+CREATE OR REPLACE FUNCTION public.decrement_letter_quota()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Only decrement when letter status changes to 'completed'
+  IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed') THEN
+    UPDATE public.subscriptions
+    SET letters_remaining = GREATEST(letters_remaining - 1, 0)
+    WHERE id = (
+      SELECT id FROM public.subscriptions
+      WHERE user_id = NEW.user_id
+      AND status = 'active'
+      ORDER BY created_at DESC
+      LIMIT 1
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION public.decrement_letter_quota IS 'Automatically decrements letters_remaining when a letter is completed';
+
 -- ====================================
 -- PART 5: TRIGGERS
 -- ====================================
