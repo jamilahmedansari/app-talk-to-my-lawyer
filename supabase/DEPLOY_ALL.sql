@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS public.letters (
   recipient_name TEXT,
   recipient_address TEXT,
   status letter_status DEFAULT 'draft'::letter_status,
+  attorney_email TEXT,
+  sent_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -60,6 +62,10 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   discount NUMERIC(5,2) DEFAULT 0,
   coupon_code TEXT,
   employee_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  tier TEXT,
+  letters_remaining INTEGER DEFAULT 0,
+  monthly_allocation INTEGER DEFAULT 0,
+  next_refill_date TIMESTAMPTZ,
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -123,6 +129,25 @@ CREATE TABLE IF NOT EXISTS public.commissions (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create purchases table for tracking mock checkouts
+CREATE TABLE IF NOT EXISTS public.purchases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  subscription_id UUID REFERENCES public.subscriptions(id) ON DELETE SET NULL,
+  tier TEXT NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  payment_id TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create refill_history table for tracking letter refills
+CREATE TABLE IF NOT EXISTS public.refill_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  subscription_id UUID NOT NULL REFERENCES public.subscriptions(id) ON DELETE CASCADE,
+  letters_refilled INTEGER NOT NULL,
+  refilled_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role ON public.user_roles(role);
@@ -135,9 +160,14 @@ CREATE INDEX IF NOT EXISTS idx_commissions_status ON public.commissions(status);
 CREATE INDEX IF NOT EXISTS idx_letters_user_id ON public.letters(user_id);
 CREATE INDEX IF NOT EXISTS idx_letters_status ON public.letters(status);
 CREATE INDEX IF NOT EXISTS idx_letters_created_at ON public.letters(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_letters_attorney_email ON public.letters(attorney_email);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_coupon_code ON public.subscriptions(coupon_code);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_next_refill_date ON public.subscriptions(next_refill_date);
+CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON public.purchases(user_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_subscription_id ON public.purchases(subscription_id);
+CREATE INDEX IF NOT EXISTS idx_refill_history_subscription_id ON public.refill_history(subscription_id);
 
 -- ====================================
 -- PART 4: HELPER FUNCTIONS
