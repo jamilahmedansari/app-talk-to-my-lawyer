@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { EmployeeCoupon, Commission, Profile } from "@/lib/types/database";
+import type {
+  Database,
+  EmployeeCoupon,
+  Commission,
+  Profile,
+} from "@/lib/types/database";
 
 export default function EmployeeDashboardClient() {
   const router = useRouter();
@@ -22,11 +27,7 @@ export default function EmployeeDashboardClient() {
   const [discountPercent, setDiscountPercent] = useState(10);
   const [maxUsage, setMaxUsage] = useState<number | undefined>(undefined);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -35,34 +36,41 @@ export default function EmployeeDashboardClient() {
       }
 
       // Load profile
-      const { data: profileData } = await supabase
+      const { data: profileDataRaw } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
+      const profileData = profileDataRaw as Profile | null;
       setProfile(profileData);
 
       // Load employee's coupons
-      const { data: couponsData } = await supabase
+      const { data: couponsDataRaw } = await supabase
         .from("employee_coupons")
         .select("*")
         .eq("employee_id", user.id)
         .order("created_at", { ascending: false });
-      setCoupons(couponsData || []);
+      const couponsData = (couponsDataRaw as EmployeeCoupon[] | null) ?? [];
+      setCoupons(couponsData);
 
       // Load employee's commissions
-      const { data: commissionsData } = await supabase
+      const { data: commissionsDataRaw } = await supabase
         .from("commissions")
         .select("*")
         .eq("employee_id", user.id)
         .order("created_at", { ascending: false });
-      setCommissions(commissionsData || []);
+      const commissionsData = (commissionsDataRaw as Commission[] | null) ?? [];
+      setCommissions(commissionsData);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,15 +80,17 @@ export default function EmployeeDashboardClient() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const payload: Database["public"]["Tables"]["employee_coupons"]["Insert"] = {
+        employee_id: user.id,
+        code: newCouponCode.toUpperCase(),
+        discount_percent: discountPercent,
+        max_usage: maxUsage,
+        is_active: true,
+      };
+
+      const { data, error } = await (supabase as any)
         .from("employee_coupons")
-        .insert({
-          employee_id: user.id,
-          code: newCouponCode.toUpperCase(),
-          discount_percent: discountPercent,
-          max_usage: maxUsage,
-          is_active: true,
-        })
+        .insert(payload)
         .select()
         .single();
 
@@ -101,7 +111,7 @@ export default function EmployeeDashboardClient() {
 
   const toggleCouponStatus = async (couponId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("employee_coupons")
         .update({ is_active: !currentStatus })
         .eq("id", couponId);

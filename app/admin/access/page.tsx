@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import type { Database } from "@/lib/types/database";
 
 export default function AdminAccess() {
   const [secretKey, setSecretKey] = useState("");
@@ -54,14 +55,32 @@ export default function AdminAccess() {
         }
 
         if (authData.user) {
-          // Promote user to admin role
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ role: "admin", full_name: fullName })
-            .eq("id", authData.user.id);
+          const userId = authData.user.id;
 
-          if (updateError) {
-            setError("Failed to set admin role: " + updateError.message);
+          const profilePayload: Database["public"]["Tables"]["profiles"]["Update"] = {
+            full_name: fullName,
+          };
+          const { error: profileError } = await (supabase as any)
+            .from("profiles")
+            .update(profilePayload)
+            .eq("id", userId);
+
+          if (profileError) {
+            setError("Failed to update profile: " + profileError.message);
+            setLoading(false);
+            return;
+          }
+
+          const rolePayload: Database["public"]["Tables"]["user_roles"]["Insert"] = {
+            user_id: userId,
+            role: "admin",
+          };
+          const { error: roleError } = await (supabase as any)
+            .from("user_roles")
+            .upsert(rolePayload, { onConflict: "user_id" });
+
+          if (roleError) {
+            setError("Failed to set admin role: " + roleError.message);
             setLoading(false);
             return;
           }
@@ -82,14 +101,18 @@ export default function AdminAccess() {
         }
 
         if (authData.user) {
-          // Promote user to admin role
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ role: "admin" })
-            .eq("id", authData.user.id);
+          const userId = authData.user.id;
 
-          if (updateError) {
-            setError("Failed to set admin role: " + updateError.message);
+          const rolePayload: Database["public"]["Tables"]["user_roles"]["Insert"] = {
+            user_id: userId,
+            role: "admin",
+          };
+          const { error: roleError } = await (supabase as any)
+            .from("user_roles")
+            .upsert(rolePayload, { onConflict: "user_id" });
+
+          if (roleError) {
+            setError("Failed to set admin role: " + roleError.message);
             setLoading(false);
             return;
           }

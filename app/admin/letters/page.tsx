@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import type { UserRoleRow } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Letter } from "@/lib/types/database";
@@ -12,11 +13,7 @@ export default function AdminLettersPage() {
   const [loading, setLoading] = useState(true);
   const [letters, setLetters] = useState<Letter[]>([]);
 
-  useEffect(() => {
-    loadLetters();
-  }, []);
-
-  const loadLetters = async () => {
+  const loadLetters = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -25,11 +22,13 @@ export default function AdminLettersPage() {
       }
 
       // Check if admin
-      const { data: roleData } = await supabase
+      const { data: roleDataRaw } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .single();
+
+      const roleData = roleDataRaw as Pick<UserRoleRow, "role"> | null;
 
       if (roleData?.role !== "admin") {
         router.push("/dashboard");
@@ -37,18 +36,24 @@ export default function AdminLettersPage() {
       }
 
       // Load all letters
-      const { data: lettersData } = await supabase
+      const { data: lettersDataRaw } = await supabase
         .from("letters")
         .select("*")
         .order("created_at", { ascending: false });
 
-      setLetters(lettersData || []);
+      const lettersData = (lettersDataRaw as Letter[] | null) ?? [];
+
+      setLetters(lettersData);
     } catch (error) {
       console.error("Error loading letters:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    void loadLetters();
+  }, [loadLetters]);
 
   const deleteLetter = async (letterId: string) => {
     if (!confirm("Are you sure you want to delete this letter?")) {

@@ -1,7 +1,7 @@
 // Auth Utilities
 import { getServerSupabase } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import type { UserRole, Profile, UserRole_Table } from "@/lib/types/database";
+import type { UserRole, Profile } from "@/lib/types/database";
 
 /**
  * Requires authentication. Redirects to /auth if not authenticated.

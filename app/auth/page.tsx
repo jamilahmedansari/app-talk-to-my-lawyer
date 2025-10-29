@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase/client";
+import type { UserRoleRow } from "@/lib/types/database";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -47,17 +48,19 @@ export default function AuthPage() {
         if (error) throw error;
 
         if (data.user) {
-          // Get user role from profile
-          const { data: profile } = await supabase
-            .from("profiles")
+          // Get user role from user_roles table
+          const { data: roleDataRaw } = await supabase
+            .from("user_roles")
             .select("role")
-            .eq("id", data.user.id)
+            .eq("user_id", data.user.id)
             .single();
 
           // Redirect based on role
-          if (profile?.role === "admin") {
+          const roleData = roleDataRaw as Pick<UserRoleRow, "role"> | null;
+
+          if (roleData?.role === "admin") {
             router.push("/admin");
-          } else if (profile?.role === "employee") {
+          } else if (roleData?.role === "employee") {
             router.push("/dashboard/employee");
           } else {
             router.push("/dashboard");

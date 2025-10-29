@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import type { Profile, UserRole_Table, Subscription, Commission } from "@/lib/types/database";
+import type {
+  Database,
+  Profile,
+  Subscription,
+  Commission,
+  UserRoleRow,
+} from "@/lib/types/database";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -22,11 +28,7 @@ export default function AdminDashboard() {
     pendingCommissions: 0,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -35,11 +37,13 @@ export default function AdminDashboard() {
       }
 
       // Check if admin
-      const { data: roleData } = await supabase
+      const { data: roleDataRaw } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .single();
+
+      const roleData = roleDataRaw as Pick<UserRoleRow, "role"> | null;
 
       if (roleData?.role !== "admin") {
         router.push("/dashboard");
@@ -47,47 +51,52 @@ export default function AdminDashboard() {
       }
 
       // Load all users with their roles
-      const { data: usersData } = await supabase
+      const { data: usersDataRaw } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
+      const usersData = (usersDataRaw as Profile[] | null) ?? [];
+
       // Get roles for each user
       const usersWithRoles = await Promise.all(
-        (usersData || []).map(async (user) => {
-          const { data: roleData } = await supabase
+        usersData.map(async (user) => {
+          const { data: userRoleRaw } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", user.id)
             .single();
-          return { ...user, role: roleData?.role };
+          const userRole = userRoleRaw as Pick<UserRoleRow, "role"> | null;
+          return { ...user, role: userRole?.role };
         })
       );
       setUsers(usersWithRoles);
 
       // Load subscriptions
-      const { data: subsData } = await supabase
+      const { data: subsDataRaw } = await supabase
         .from("subscriptions")
         .select("*")
         .order("created_at", { ascending: false });
-      setSubscriptions(subsData || []);
+      const subsData = (subsDataRaw as Subscription[] | null) ?? [];
+      setSubscriptions(subsData);
 
       // Load commissions
-      const { data: commissionsData } = await supabase
+      const { data: commissionsDataRaw } = await supabase
         .from("commissions")
         .select("*")
         .order("created_at", { ascending: false });
-      setCommissions(commissionsData || []);
+      const commissionsData = (commissionsDataRaw as Commission[] | null) ?? [];
+      setCommissions(commissionsData);
 
       // Calculate stats
-      const activeSubsCount = subsData?.filter((s) => s.status === "active").length || 0;
-      const totalRevenue = subsData?.reduce((sum, s) => sum + (Number(s.price) || 0), 0) || 0;
+      const activeSubsCount = subsData.filter((s) => s.status === "active").length;
+      const totalRevenue = subsData.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
       const pendingComm = commissionsData
-        ?.filter((c) => c.status === "pending")
-        .reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
+        .filter((c) => c.status === "pending")
+        .reduce((sum, c) => sum + Number(c.commission_amount), 0);
 
       setStats({
-        totalUsers: usersData?.length || 0,
+        totalUsers: usersData.length,
         activeSubscriptions: activeSubsCount,
         totalRevenue,
         pendingCommissions: pendingComm,
@@ -97,11 +106,15 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("user_roles")
         .update({ role: newRole })
         .eq("user_id", userId);
@@ -118,7 +131,7 @@ export default function AdminDashboard() {
 
   const payCommission = async (commissionId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("commissions")
         .update({
           status: "paid",

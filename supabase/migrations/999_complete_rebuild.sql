@@ -5,10 +5,12 @@
 DROP TYPE IF EXISTS user_role CASCADE;
 DROP TYPE IF EXISTS letter_status CASCADE;
 DROP TYPE IF EXISTS commission_status CASCADE;
+DROP TYPE IF EXISTS sub_status CASCADE;
 
 CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
 CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
 CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
+CREATE TYPE sub_status AS ENUM ('active', 'canceled', 'expired');
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -17,6 +19,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   earnings NUMERIC(10,2) DEFAULT 0,
   referrals INTEGER DEFAULT 0,
+  subscription_tier TEXT DEFAULT 'free',
+  subscription_status sub_status DEFAULT 'active'::sub_status,
+  subscription_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -25,10 +30,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.letters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
   content TEXT NOT NULL,
   recipient_name TEXT,
   recipient_address TEXT,
-  status TEXT DEFAULT 'draft',
+  status letter_status DEFAULT 'draft'::letter_status,
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -38,9 +45,11 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plan TEXT NOT NULL,
-  status TEXT DEFAULT 'active',
+  status sub_status DEFAULT 'active'::sub_status,
   price NUMERIC(10,2),
+  discount NUMERIC(5,2) DEFAULT 0,
   coupon_code TEXT,
+  employee_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -75,6 +84,7 @@ CREATE TABLE IF NOT EXISTS public.employee_coupons (
   code TEXT NOT NULL UNIQUE,
   discount_percent INTEGER NOT NULL CHECK (discount_percent >= 0 AND discount_percent <= 100),
   usage_count INTEGER DEFAULT 0,
+  max_usage INTEGER,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { Subscription } from "@/lib/types/database";
+import type { Database, Subscription, UserRoleRow } from "@/lib/types/database";
 
 export default function AdminSubscriptionsPage() {
   const router = useRouter();
@@ -18,11 +18,7 @@ export default function AdminSubscriptionsPage() {
     totalRevenue: 0,
   });
 
-  useEffect(() => {
-    loadSubscriptions();
-  }, []);
-
-  const loadSubscriptions = async () => {
+  const loadSubscriptions = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -31,11 +27,13 @@ export default function AdminSubscriptionsPage() {
       }
 
       // Check if admin
-      const { data: roleData } = await supabase
+      const { data: roleDataRaw } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .single();
+
+      const roleData = roleDataRaw as Pick<UserRoleRow, "role"> | null;
 
       if (roleData?.role !== "admin") {
         router.push("/dashboard");
@@ -43,17 +41,19 @@ export default function AdminSubscriptionsPage() {
       }
 
       // Load all subscriptions
-      const { data: subsData } = await supabase
+      const { data: subsDataRaw } = await supabase
         .from("subscriptions")
         .select("*")
         .order("created_at", { ascending: false });
 
-      setSubscriptions(subsData || []);
+      const subsData = (subsDataRaw as Subscription[] | null) ?? [];
+
+      setSubscriptions(subsData);
 
       // Calculate stats
-      const active = subsData?.filter((s) => s.status === "active").length || 0;
-      const canceled = subsData?.filter((s) => s.status === "canceled").length || 0;
-      const revenue = subsData?.reduce((sum, s) => sum + (Number(s.price) || 0), 0) || 0;
+      const active = subsData.filter((s) => s.status === "active").length;
+      const canceled = subsData.filter((s) => s.status === "canceled").length;
+      const revenue = subsData.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
 
       setStats({
         total: subsData?.length || 0,
@@ -66,7 +66,11 @@ export default function AdminSubscriptionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    void loadSubscriptions();
+  }, [loadSubscriptions]);
 
   const cancelSubscription = async (subId: string) => {
     if (!confirm("Are you sure you want to cancel this subscription?")) {
@@ -74,7 +78,7 @@ export default function AdminSubscriptionsPage() {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("subscriptions")
         .update({ status: "canceled" })
         .eq("id", subId);

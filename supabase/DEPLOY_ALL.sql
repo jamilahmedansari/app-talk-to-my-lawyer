@@ -11,6 +11,17 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Create enums up-front
+DROP TYPE IF EXISTS user_role;
+DROP TYPE IF EXISTS letter_status;
+DROP TYPE IF EXISTS sub_status;
+DROP TYPE IF EXISTS commission_status;
+
+CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
+CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
+CREATE TYPE sub_status AS ENUM ('active', 'canceled', 'expired');
+CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
+
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -18,6 +29,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   earnings NUMERIC(10,2) DEFAULT 0,
   referrals INTEGER DEFAULT 0,
+  subscription_tier TEXT DEFAULT 'free',
+  subscription_status sub_status DEFAULT 'active'::sub_status,
+  subscription_expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -26,10 +40,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.letters (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
   content TEXT NOT NULL,
   recipient_name TEXT,
   recipient_address TEXT,
-  status TEXT DEFAULT 'draft',
+  status letter_status DEFAULT 'draft'::letter_status,
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -39,9 +55,11 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plan TEXT NOT NULL,
-  status TEXT DEFAULT 'active',
+  status sub_status DEFAULT 'active'::sub_status,
   price NUMERIC(10,2),
+  discount NUMERIC(5,2) DEFAULT 0,
   coupon_code TEXT,
+  employee_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -71,16 +89,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
 -- PART 3: ENHANCED SCHEMA (Migration 003)
 -- ====================================
 
--- Create ENUM types (drop and recreate to ensure clean state)
-DROP TYPE IF EXISTS user_role;
-CREATE TYPE user_role AS ENUM ('user', 'employee', 'admin');
-
-DROP TYPE IF EXISTS letter_status;
-CREATE TYPE letter_status AS ENUM ('draft', 'generating', 'completed', 'failed');
-
-DROP TYPE IF EXISTS commission_status;
-CREATE TYPE commission_status AS ENUM ('pending', 'paid', 'cancelled');
-
 -- Create user_roles table
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -97,6 +105,7 @@ CREATE TABLE IF NOT EXISTS public.employee_coupons (
   code TEXT NOT NULL UNIQUE,
   discount_percent INTEGER NOT NULL CHECK (discount_percent >= 0 AND discount_percent <= 100),
   usage_count INTEGER DEFAULT 0,
+  max_usage INTEGER,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

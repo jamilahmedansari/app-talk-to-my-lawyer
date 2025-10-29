@@ -1,5 +1,6 @@
 // PDF Utilities - Professional Letter PDF Generation
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import type { PDFFont } from "pdf-lib";
 import type { Letter } from "./types/database";
 
 /**
@@ -30,8 +31,7 @@ export async function generateLetterPDF(letter: Letter): Promise<Buffer> {
     const drawText = (
       text: string,
       fontSize: number,
-      useFont = font,
-      isBold = false
+      useFont: PDFFont = font,
     ): void => {
       const lines = wrapText(text, maxWidth, fontSize, useFont);
 
@@ -87,7 +87,7 @@ export async function generateLetterPDF(letter: Letter): Promise<Buffer> {
     const content = letter.content || "";
     const paragraphs = content.split("\n\n");
 
-    paragraphs.forEach((paragraph) => {
+    paragraphs.forEach((paragraph: string) => {
       if (paragraph.trim()) {
         drawText(paragraph.trim(), 11);
         yPosition -= 10; // Paragraph spacing
@@ -111,7 +111,7 @@ function wrapText(
   text: string,
   maxWidth: number,
   fontSize: number,
-  font: any
+  font: PDFFont
 ): string[] {
   const words = text.split(" ");
   const lines: string[] = [];
