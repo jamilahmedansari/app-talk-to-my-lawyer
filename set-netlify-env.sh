@@ -11,7 +11,7 @@ npx netlify-cli env:set SUPABASE_SERVICE_ROLE_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6I
 npx netlify-cli env:set JWT_SECRET "Q3e+MfRQOMj7TOJjuJVPMs1qYgpbbTxjTaS29He00jD5K/dPrbK/Rg87frQdXCRQuc7adHLE3ySXDIue6JwJHA=="
 npx netlify-cli env:set GEMINI_API_KEY "AIzaSyCvKrvyhzRNNystkhkz5Kh92GSNba7UU3Y"
 npx netlify-cli env:set NEXT_PUBLIC_GEMINI_MODEL "gemini-1.5-pro"
-npx netlify-cli env:set ADMIN_SIGNUP_SECRET "your-admin-secret-here"
+npx netlify-cli env:set ADMIN_SIGNUP_SECRET "/LWBoKXAA73rBaPptJe7rdv9GYldY0Whx6fdGT9YDro="
 npx netlify-cli env:set NEXT_TELEMETRY_DISABLED "1"
 
 echo "✅ Environment variables set successfully!"
