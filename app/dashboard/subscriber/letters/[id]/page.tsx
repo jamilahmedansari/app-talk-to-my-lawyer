@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-export default function LetterDetailPage({ params }: { params: { id: string } }) {
+export default function LetterDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = use(params);
   const router = useRouter();
   const [letter, setLetter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
 
   const fetchLetter = async () => {
     try {
-      const response = await fetch(`/api/letters/${params.id}`);
+      const response = await fetch(`/api/letters/${unwrappedParams.id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch letter");
       }
@@ -44,7 +45,7 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
   useEffect(() => {
     fetchLetter();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [unwrappedParams.id]);
 
   const handleSendEmail = async () => {
     if (!attorneyEmail) {
@@ -54,7 +55,7 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
 
     setSending(true);
     try {
-      const response = await fetch(`/api/letters/${params.id}/send-email`, {
+      const response = await fetch(`/api/letters/${unwrappedParams.id}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -125,7 +126,7 @@ export default function LetterDetailPage({ params }: { params: { id: string } })
                   </svg>
                   Send via Email
                 </Button>
-                <a href={`/api/letters/${params.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                <a href={`/api/letters/${unwrappedParams.id}/pdf`} target="_blank" rel="noopener noreferrer">
                   <Button className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
