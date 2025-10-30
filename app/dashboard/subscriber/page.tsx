@@ -2,6 +2,7 @@ import { requireAuth, getUserProfile } from "@/lib/auth";
 import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { SuccessToastHandler } from "@/components/success-toast-handler";
 
 export default async function SubscriberDashboard() {
   await requireAuth();
@@ -29,6 +30,7 @@ export default async function SubscriberDashboard() {
 
   return (
     <>
+      <SuccessToastHandler />
       <DashboardHeader
         userName={profile?.full_name}
         userEmail={profile?.email}
