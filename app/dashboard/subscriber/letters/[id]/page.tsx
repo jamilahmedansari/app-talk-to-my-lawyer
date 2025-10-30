@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { LoadingPage } from "@/components/ui/loading";
 
 export default function LetterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -35,7 +37,7 @@ export default function LetterDetailPage({ params }: { params: Promise<{ id: str
       }
     } catch (error) {
       console.error("Error fetching letter:", error);
-      alert("Failed to load letter");
+      toast.error("Failed to load letter");
       router.push("/dashboard/subscriber/letters");
     } finally {
       setLoading(false);
