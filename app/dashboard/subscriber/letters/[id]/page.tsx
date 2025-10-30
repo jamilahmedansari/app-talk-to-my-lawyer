@@ -51,46 +51,44 @@ export default function LetterDetailPage({ params }: { params: Promise<{ id: str
 
   const handleSendEmail = async () => {
     if (!attorneyEmail) {
-      alert("Please enter an attorney email address");
+      toast.error("Please enter an attorney email address");
       return;
     }
 
     setSending(true);
-    try {
-      const response = await fetch(`/api/letters/${unwrappedParams.id}/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attorney_email: attorneyEmail,
-          attorney_name: attorneyName || undefined,
-        }),
-      });
 
+    const sendPromise = fetch(`/api/letters/${unwrappedParams.id}/send-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        attorney_email: attorneyEmail,
+        attorney_name: attorneyName || undefined,
+      }),
+    }).then(async (response) => {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to send email");
       }
+      return response.json();
+    });
 
-      alert("Email sent successfully!");
-      setEmailModalOpen(false);
-      fetchLetter(); // Refresh to show sent status
-    } catch (error: any) {
-      console.error("Error sending email:", error);
-      alert(error.message || "Failed to send email");
-    } finally {
-      setSending(false);
-    }
+    toast.promise(sendPromise, {
+      loading: "Sending email...",
+      success: () => {
+        setEmailModalOpen(false);
+        setSending(false);
+        fetchLetter(); // Refresh to show sent status
+        return "Email sent successfully!";
+      },
+      error: (err) => {
+        setSending(false);
+        return err.message || "Failed to send email. Please try again.";
+      },
+    });
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading letter...</p>
-        </div>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   if (!letter) {

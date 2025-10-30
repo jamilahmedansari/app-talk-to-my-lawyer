@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const pricingTiers = [
   {
@@ -76,18 +77,17 @@ export default function PricingPage() {
     setLoading(true);
     setSelectedTier(tierId);
 
-    try {
-      // Check if user is authenticated
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: tierId }),
-      });
-
+    const checkoutPromise = fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: tierId }),
+    }).then(async (response) => {
       if (response.status === 401) {
         // Not authenticated, redirect to auth
+        setLoading(false);
+        setSelectedTier(null);
         router.push(`/auth?redirect=/pricing&plan=${tierId}`);
-        return;
+        throw new Error("Please sign in to continue");
       }
 
       if (!response.ok) {
@@ -95,17 +95,23 @@ export default function PricingPage() {
         throw new Error(error.error || "Failed to process subscription");
       }
 
-      const data = await response.json();
-      
-      // Redirect to dashboard with success message
-      router.push("/dashboard/subscriber?success=true");
-    } catch (error: any) {
-      console.error("Checkout error:", error);
-      alert(error.message || "An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-      setSelectedTier(null);
-    }
+      return response.json();
+    });
+
+    toast.promise(checkoutPromise, {
+      loading: "Processing your subscription...",
+      success: (data) => {
+        setLoading(false);
+        setSelectedTier(null);
+        router.push("/dashboard/subscriber?success=true");
+        return "Subscription activated successfully!";
+      },
+      error: (err) => {
+        setLoading(false);
+        setSelectedTier(null);
+        return err.message || "An error occurred. Please try again.";
+      },
+    });
   };
 
   return (

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyLetters } from "@/components/ui/empty-state";
 
 export default async function MyLettersPage() {
   await requireAuth();

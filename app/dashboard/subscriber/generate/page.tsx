@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading";
 
 export default function GenerateLetterPage() {
   const router = useRouter();
@@ -39,47 +41,52 @@ export default function GenerateLetterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!quota.canGenerate) {
-      alert("You have reached your monthly letter limit. Please upgrade your subscription.");
+      toast.error("You have reached your monthly letter limit. Please upgrade your subscription.");
       return;
     }
 
     setGenerating(true);
 
-    try {
-      const response = await fetch("/api/letters/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content,
-          recipient_name: recipientName,
-          recipient_address: recipientAddress,
-        }),
-      });
-
+    const generatePromise = fetch("/api/letters/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        content,
+        recipient_name: recipientName,
+        recipient_address: recipientAddress,
+      }),
+    }).then(async (response) => {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to generate letter");
       }
+      return response.json();
+    });
 
-      const { letterId } = await response.json();
-      
-      alert("Letter generated successfully!");
-      router.push(`/dashboard/subscriber/letters/${letterId}`);
-    } catch (error: any) {
-      console.error("Error generating letter:", error);
-      alert(error.message || "An error occurred while generating the letter");
-    } finally {
-      setGenerating(false);
-    }
+    toast.promise(generatePromise, {
+      loading: "Generating your professional legal letter...",
+      success: (data) => {
+        setGenerating(false);
+        router.push(`/dashboard/subscriber/letters/${data.letterId}`);
+        return "Letter generated successfully!";
+      },
+      error: (err) => {
+        setGenerating(false);
+        return err.message || "An error occurred while generating the letter";
+      },
+    });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-slate-600">Loading quota information...</p>
+        </div>
       </div>
     );
   }
