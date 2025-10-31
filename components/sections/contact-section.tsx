@@ -112,7 +112,7 @@ export function ContactSection() {
 
             {/* Copyright */}
             <p className="text-sm text-slate-500">
-              © 2025 Talk-To-My-Lawyer. All rights reserved.
+              © {new Date().getFullYear()} Talk-To-My-Lawyer. All rights reserved.
             </p>
           </div>
         </div>
