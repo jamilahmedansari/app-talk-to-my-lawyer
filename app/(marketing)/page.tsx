@@ -1,8 +1,5 @@
 "use client"
 
-import { Shader, ChromaFlow, Swirl } from "shaders/react"
-import { CustomCursor } from "@/components/custom-cursor"
-import { GrainOverlay } from "@/components/grain-overlay"
 import { WorkSection } from "@/components/sections/work-section"
 import { ServicesSection } from "@/components/sections/services-section"
 import { AboutSection } from "@/components/sections/about-section"
@@ -10,46 +7,15 @@ import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Scale, Shield, FileText, CheckCircle2, Award, Clock } from "lucide-react"
 
 export default function Home() {
   const router = useRouter()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(false)
   const touchStartY = useRef(0)
   const touchStartX = useRef(0)
-  const shaderContainerRef = useRef<HTMLDivElement>(null)
   const scrollThrottleRef = useRef<number | undefined>(undefined)
-
-  useEffect(() => {
-    const checkShaderReady = () => {
-      if (shaderContainerRef.current) {
-        const canvas = shaderContainerRef.current.querySelector("canvas")
-        if (canvas && canvas.width > 0 && canvas.height > 0) {
-          setIsLoaded(true)
-          return true
-        }
-      }
-      return false
-    }
-
-    if (checkShaderReady()) return
-
-    const intervalId = setInterval(() => {
-      if (checkShaderReady()) {
-        clearInterval(intervalId)
-      }
-    }, 100)
-
-    const fallbackTimer = setTimeout(() => {
-      setIsLoaded(true)
-    }, 1500)
-
-    return () => {
-      clearInterval(intervalId)
-      clearTimeout(fallbackTimer)
-    }
-  }, [])
 
   const scrollToSection = (index: number) => {
     if (scrollContainerRef.current) {
@@ -175,123 +141,114 @@ export default function Home() {
   }, [currentSection])
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-background">
-      <CustomCursor />
-      <GrainOverlay />
+    <main className="relative w-full overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+      {/* Professional Header with Legal Theme */}
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-12">
+          <button
+            onClick={() => scrollToSection(0)}
+            className="flex items-center gap-2 transition-transform hover:scale-105"
+          >
+            <Scale className="h-6 w-6 text-blue-900" />
+            <span className="font-serif text-xl font-bold tracking-tight text-slate-900">Talk-To-My-Lawyer</span>
+          </button>
 
-      <div
-        ref={shaderContainerRef}
-        className={`fixed inset-0 z-0 transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-        style={{ contain: "strict" }}
-      >
-        <Shader className="h-full w-full">
-          <Swirl
-            colorA="#1275d8"
-            colorB="#e19136"
-            speed={0.8}
-            detail={0.8}
-            blend={50}
-            coarseX={40}
-            coarseY={40}
-            mediumX={40}
-            mediumY={40}
-            fineX={40}
-            fineY={40}
-          />
-          <ChromaFlow
-            baseColor="#0066ff"
-            upColor="#0066ff"
-            downColor="#d1d1d1"
-            leftColor="#e19136"
-            rightColor="#e19136"
-            intensity={0.9}
-            radius={1.8}
-            momentum={25}
-            maskType="alpha"
-            opacity={0.97}
-          />
-        </Shader>
-        <div className="absolute inset-0 bg-black/20" />
-      </div>
-
-      <nav
-        className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-6 transition-opacity duration-700 md:px-12 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <button
-          onClick={() => scrollToSection(0)}
-          className="transition-transform hover:scale-105"
-        >
-          <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Talk-To-My-Lawyer</span>
-        </button>
-
-        <div className="hidden items-center gap-8 md:flex">
-          {["Home", "How It Works", "Features", "Why Choose Us", "Get Started"].map((item, index) => (
-            <button
-              key={item}
-              onClick={() => scrollToSection(index)}
-              className={`group relative font-sans text-sm font-medium transition-colors ${
-                currentSection === index ? "text-foreground" : "text-foreground/80 hover:text-foreground"
-              }`}
-            >
-              {item}
-              <span
-                className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
-                  currentSection === index ? "w-full" : "w-0 group-hover:w-full"
+          <div className="hidden items-center gap-8 md:flex">
+            {["Home", "How It Works", "Services", "Why Us", "Get Started"].map((item, index) => (
+              <button
+                key={item}
+                onClick={() => scrollToSection(index)}
+                className={`group relative font-sans text-sm font-medium transition-colors ${
+                  currentSection === index ? "text-blue-900" : "text-slate-600 hover:text-blue-900"
                 }`}
-              />
-            </button>
-          ))}
-        </div>
+              >
+                {item}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-blue-900 transition-all duration-300 ${
+                    currentSection === index ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
 
-        <MagneticButton variant="secondary" onClick={() => router.push("/auth")}>
-          Sign In
-        </MagneticButton>
+          <button
+            onClick={() => router.push("/auth")}
+            className="rounded-md bg-blue-900 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-800 hover:shadow-lg"
+          >
+            Client Portal
+          </button>
+        </div>
       </nav>
 
       <div
         ref={scrollContainerRef}
         data-scroll-container
-        className={`relative z-10 flex h-screen overflow-x-auto overflow-y-hidden transition-opacity duration-700 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
+        className="relative z-10 flex overflow-x-auto overflow-y-hidden"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* Hero Section */}
-        <section className="flex min-h-screen w-screen shrink-0 flex-col justify-end px-6 pb-16 pt-24 md:px-12 md:pb-24">
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md duration-700">
-              <p className="font-mono text-xs text-foreground/90">Professional Legal Documents</p>
+        {/* Professional Hero Section */}
+        <section className="flex min-h-screen w-screen shrink-0 flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 px-6 pt-24 md:px-12">
+          <div className="mx-auto max-w-6xl text-center">
+            {/* Trust Badge */}
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2">
+              <Shield className="h-4 w-4 text-blue-900" />
+              <span className="text-sm font-medium text-blue-900">Trusted Legal Document Platform</span>
             </div>
-            <h1 className="mb-6 animate-in fade-in slide-in-from-bottom-8 font-sans text-6xl font-light leading-[1.1] tracking-tight text-foreground duration-1000 md:text-7xl lg:text-8xl">
-              <span className="text-balance">
-                Generate Legal Letters
-                <br />
-                with Confidence
-              </span>
+
+            {/* Main Headline */}
+            <h1 className="mb-6 font-serif text-5xl font-bold leading-tight tracking-tight text-slate-900 md:text-6xl lg:text-7xl">
+              Professional Legal Letters
+              <br />
+              <span className="text-blue-900">Made Simple</span>
             </h1>
-            <p className="mb-8 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-lg leading-relaxed text-foreground/90 duration-1000 delay-200 md:text-xl">
-              <span className="text-pretty">
-                Professional legal documents in minutes. Save time, reduce costs, and ensure accuracy.
-              </span>
+
+            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-600 md:text-xl">
+              Generate legally sound demand letters, notices, and responses with confidence. 
+              Trusted by legal professionals and businesses nationwide.
             </p>
-            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
-              <MagneticButton size="lg" variant="primary" onClick={() => router.push("/auth")}>
-                Start Creating Letters
-              </MagneticButton>
-              <MagneticButton size="lg" variant="secondary" onClick={() => router.push("/auth")}>
-                Already have an account?
-              </MagneticButton>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <button
+                onClick={() => router.push("/auth")}
+                className="group flex items-center gap-2 rounded-lg bg-blue-900 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-blue-800 hover:shadow-xl"
+              >
+                <FileText className="h-5 w-5" />
+                Create Your Letter Now
+              </button>
+              <button
+                onClick={() => scrollToSection(1)}
+                className="flex items-center gap-2 rounded-lg border-2 border-slate-300 bg-white px-8 py-4 text-base font-semibold text-slate-900 transition-all hover:border-blue-900 hover:bg-slate-50"
+              >
+                See How It Works
+              </button>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
+              {[
+                { icon: CheckCircle2, label: "Legally Compliant", value: "100%" },
+                { icon: Shield, label: "Secure & Private", value: "Bank-Level" },
+                { icon: Award, label: "Client Satisfaction", value: "98%" },
+                { icon: Clock, label: "Average Time", value: "5 mins" },
+              ].map((item, index) => (
+                <div key={index} className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                    <item.icon className="h-6 w-6 text-blue-900" />
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900">{item.value}</p>
+                  <p className="text-sm text-slate-600">{item.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-in fade-in duration-1000 delay-500">
-            <div className="flex items-center gap-2">
-              <p className="font-mono text-xs text-foreground/80">Scroll to explore</p>
-              <div className="flex h-6 w-12 items-center justify-center rounded-full border border-foreground/20 bg-foreground/15 backdrop-blur-md">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-foreground/80" />
-              </div>
+          {/* Scroll Indicator */}
+          <div className="absolute bottom-8 flex animate-bounce flex-col items-center gap-2">
+            <p className="text-sm text-slate-500">Scroll to learn more</p>
+            <div className="h-8 w-5 rounded-full border-2 border-slate-300">
+              <div className="mx-auto mt-1.5 h-2 w-1 animate-pulse rounded-full bg-slate-400" />
             </div>
           </div>
         </section>
